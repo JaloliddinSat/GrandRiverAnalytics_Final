@@ -28,11 +28,6 @@
         <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
         <img src="{{ cover }}" alt="Cover image for {{ post.title }}" loading="lazy" data-fallback-image data-default-cover="{{ placeholder_cover }}" />
     </figure>
-    {% if post.cover_url %}
-    <figure class="article-cover">
-        <img src="{{ post.cover_url }}" alt="Cover image for {{ post.title }}" loading="lazy" />
-    </figure>
-    {% endif %}
     <aside class="toc" aria-label="Table of contents">
         <h2>On this page</h2>
         <nav id="toc"></nav>
@@ -46,7 +41,6 @@
     <div class="latest-grid">
         {% for item in more_posts %}
         <article class="post-card post-card--compact">
-        <article class="post-card">
             <p class="muted">{{ item.publish_date|format_date }}</p>
             <h3><a href="{{ url_for('post_detail', slug=item.slug) }}">{{ item.title }}</a></h3>
             <p>{{ item.excerpt }}</p>
