@@ -11,6 +11,7 @@
             <p class="muted">Request access to our research or connect with the analyst team.</p>
             <form method="post" name="contact" data-netlify="true" data-netlify-honeypot="website" novalidate>
                 <input type="hidden" name="form-name" value="contact" />
+            <form method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" class="hp" />
                 <div class="form-group">

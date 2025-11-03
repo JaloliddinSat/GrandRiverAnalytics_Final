@@ -28,6 +28,17 @@
                     <p>{{ post.excerpt }}</p>
                     <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read insight →</a>
                 </div>
+        <div class="blog-posts" id="blog-posts">
+            {% for post in posts %}
+            <article class="post-card" data-post data-title="{{ post.title }} {{ post.excerpt }}" data-tags="{{ post.tags }}">
+                {% if post.cover_url %}
+                <img src="{{ post.cover_url }}" alt="Cover image for {{ post.title }}" loading="lazy" />
+                {% endif %}
+                <p class="muted">{{ post.publish_date|format_date }}</p>
+                <h2><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
+                <p class="muted tags">{% for tag in post.tags|tag_list %}<span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}{% endfor %}</p>
+                <p>{{ post.excerpt }}</p>
+                <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read →</a>
             </article>
             {% else %}
             <p>No posts yet.</p>
