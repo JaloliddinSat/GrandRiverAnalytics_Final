@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% if blog_json %}<script type="application/ld+json">{{ blog_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<article class="container article">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('blog_index') }}">Blog</a></li>
+            <li aria-current="page">{{ post.title }}</li>
+        </ol>
+    </nav>
+    <header class="article-header">
+        <p class="muted">{{ post.publish_date|format_date }} · {{ read_time }} minute read</p>
+        <h1>{{ post.title }}</h1>
+        <p class="muted tags">{% for tag in post.tags|tag_list %}<span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}{% endfor %}</p>
+        <div class="share-links">
+            <a href="https://x.com/intent/tweet?url={{ meta.canonical|urlencode }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener">Share on X</a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ meta.canonical|urlencode }}&title={{ post.title|urlencode }}" target="_blank" rel="noopener">Share on LinkedIn</a>
+        </div>
+    </header>
+    {% if post.cover_url %}
+    <figure class="article-cover">
+        <img src="{{ post.cover_url }}" alt="Cover image for {{ post.title }}" loading="lazy" />
+    </figure>
+    {% endif %}
+    <aside class="toc" aria-label="Table of contents">
+        <h2>On this page</h2>
+        <nav id="toc"></nav>
+    </aside>
+    <div class="article-body" data-article-content>
+        {{ post.content|safe }}
+    </div>
+</article>
+<section class="container section more-posts">
+    <h2>More from the blog</h2>
+    <div class="latest-grid">
+        {% for item in more_posts %}
+        <article class="post-card">
+            <p class="muted">{{ item.publish_date|format_date }}</p>
+            <h3><a href="{{ url_for('post_detail', slug=item.slug) }}">{{ item.title }}</a></h3>
+            <p>{{ item.excerpt }}</p>
+            <a class="read-link" href="{{ url_for('post_detail', slug=item.slug) }}">Read →</a>
+        </article>
+        {% else %}
+        <p>No additional posts available.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
