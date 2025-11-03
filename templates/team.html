@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="container section">
+    <div class="section-heading">
+        <h1>Our team</h1>
+        <p class="muted">Analysts with sector depth and a mandate to communicate clearly.</p>
+    </div>
+    <div class="team-grid">
+        {% for member in team_members %}
+        <article class="team-card">
+            <img src="{{ member.photo }}" alt="Portrait of {{ member.name }}" loading="lazy" width="240" height="240" />
+            <h2>{{ member.name }}</h2>
+            <p class="muted">{{ member.title }}</p>
+            <p>{{ member.bio }}</p>
+            <a href="{{ member.linkedin }}" class="read-link" target="_blank" rel="noopener">LinkedIn</a>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

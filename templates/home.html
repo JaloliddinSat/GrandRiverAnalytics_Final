@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<style>
+    .hero {padding: 96px 0 64px; text-align: left;}
+    .hero h1 {font-size: 2.75rem; margin-bottom: 16px;}
+    .hero p {max-width: 540px; color: #444; font-size: 1.1rem;}
+    .hero .cta {margin-top: 32px;}
+    .hero .cta a {display: inline-block; padding: 12px 24px; border: 1px solid #8ACAFF; border-radius: 4px; color: #111; text-decoration: none; font-weight: 600;}
+    .hero .cta a:hover {border-color: #111;}
+    .latest-grid {display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));}
+    .post-card {border: 1px solid #eceff4; padding: 24px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px;}
+    .post-card h3 {font-size: 1.15rem; margin: 0;}
+    .post-card a.read-link {margin-top: auto; color: #111; text-decoration: none; font-weight: 600; border-bottom: 1px solid transparent;}
+    .post-card a.read-link:hover {border-bottom-color: #8ACAFF;}
+    .approach {margin-top: 80px;}
+    .approach-grid {display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));}
+    .trust-bar {margin-top: 80px; border: 1px solid #eceff4; border-radius: 8px; padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; align-items: center;}
+    .trust-placeholder {background: #f5f6f8; height: 48px; border-radius: 4px;}
+    @media (max-width: 768px) {
+        .hero {padding: 72px 0 48px;}
+        .hero h1 {font-size: 2.25rem;}
+    }
+</style>
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if org_json %}<script type="application/ld+json">{{ org_json|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="hero container">
+    <p class="eyebrow">Grand River Analytics</p>
+    <h1>Independent Equity Research.</h1>
+    <p>We publish concentrated views across large-cap financials, technology, and consumer franchises—blending fundamental diligence with pragmatic risk framing.</p>
+    <div class="cta">
+        <a href="{{ url_for('blog_index') }}">Read the latest</a>
+    </div>
+</section>
+<section class="container section">
+    <div class="section-heading">
+        <h2>Latest Research</h2>
+        <p>Dive into our most recent stock write-ups and sector notes.</p>
+    </div>
+    <div class="latest-grid">
+        {% for post in posts %}
+        <article class="post-card">
+            <p class="muted">{{ post.publish_date|format_date }}</p>
+            <h3><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h3>
+            <p class="muted">{% for tag in post.tags|tag_list %}<span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}{% endfor %}</p>
+            <p>{{ post.excerpt }}</p>
+            <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read →</a>
+        </article>
+        {% else %}
+        <p>No posts yet. Check back soon.</p>
+        {% endfor %}
+    </div>
+</section>
+<section class="container section approach">
+    <div class="section-heading">
+        <h2>Our Approach</h2>
+    </div>
+    <div class="approach-grid">
+        <div>
+            <h3>Fundamental depth</h3>
+            <p>We triangulate filings, channel checks, and management signals to frame mid-cycle earnings power.</p>
+        </div>
+        <div>
+            <h3>Risk-aware scenarios</h3>
+            <p>Our work balances upside paths with catalysts and guardrails for downside protection.</p>
+        </div>
+        <div>
+            <h3>Clear theses</h3>
+            <p>Cohesive narratives with digestible exhibits and actionable follow-up angles.</p>
+        </div>
+    </div>
+</section>
+<section class="container section trust-bar">
+    <div class="trust-placeholder" aria-hidden="true"></div>
+    <div class="trust-placeholder" aria-hidden="true"></div>
+    <div class="trust-placeholder" aria-hidden="true"></div>
+    <div class="trust-placeholder" aria-hidden="true"></div>
+</section>
+{% endblock %}

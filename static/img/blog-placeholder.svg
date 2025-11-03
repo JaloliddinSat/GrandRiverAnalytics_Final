@@ -1,0 +1,16 @@
+<svg width="480" height="320" viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Research insight cover placeholder</title>
+  <desc id="desc">Abstract gradient background with diagonal accents</desc>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2ff" />
+      <stop offset="100%" stop-color="#cdd5ff" />
+    </linearGradient>
+  </defs>
+  <rect width="480" height="320" fill="url(#gradient)" rx="24" />
+  <g fill="#ffffff" opacity="0.35">
+    <path d="M120 40h48l-96 240H24z" />
+    <path d="M360 40h48l-96 240h-48z" />
+  </g>
+  <text x="50%" y="55%" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="32" fill="#1a2a4a" font-weight="600" letter-spacing="4">Insight</text>
+</svg>
