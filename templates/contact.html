@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="container section contact">
+    <div class="contact-grid">
+        <div>
+            <h1>Contact us</h1>
+            <p class="muted">Request access to our research or connect with the analyst team.</p>
+            <form method="post" name="contact" data-netlify="true" data-netlify-honeypot="website" novalidate>
+                <input type="hidden" name="form-name" value="contact" />
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" class="hp" />
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="6" required></textarea>
+                </div>
+                <button type="submit" class="button">Send message</button>
+                {% if success %}
+                <p class="success-message">We received your message.</p>
+                {% endif %}
+            </form>
+        </div>
+        <aside>
+            <h2>Office</h2>
+            <p>250 Lafayette St.<br />Suite 400<br />New York, NY 10012</p>
+            <p><a href="mailto:research@grandriveranalytics.com">research@grandriveranalytics.com</a></p>
+            <div class="map-placeholder" role="img" aria-label="Map placeholder"></div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

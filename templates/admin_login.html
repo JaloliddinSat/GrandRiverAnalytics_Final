@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container section">
+    <div class="auth-card">
+        <h1>Admin login</h1>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password" />
+            </div>
+            <button type="submit" class="button">Log in</button>
+        </form>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    </div>
+</section>
+{% endblock %}

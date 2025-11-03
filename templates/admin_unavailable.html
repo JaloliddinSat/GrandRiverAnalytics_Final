@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container section">
+    <h1>Admin not available on static deploy</h1>
+    <p class="muted">The Netlify build of Grand River Analytics publishes a static snapshot of the site.
+        Editing tools require the Flask application and database, which are available only on the dynamic deployment.</p>
+    <p>If you need to publish or update research posts, run the Flask app on infrastructure that supports Python (Render, Fly.io, Railway, etc.).</p>
+</section>
+{% endblock %}
