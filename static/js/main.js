@@ -4,6 +4,7 @@
         initTagFilter();
         buildTableOfContents();
         initSlugSync();
+        initImageFallbacks();
     });
 
     function initSearchFilter() {
@@ -86,5 +87,54 @@
                 .replace(/^-+|-+$/g, '');
             slugInput.value = slug;
         });
+    }
+
+    function initImageFallbacks() {
+        const images = document.querySelectorAll('[data-fallback-image]');
+        images.forEach((img) => {
+            const container = img.closest('[data-fallback-container]');
+            if (!container) return;
+
+            if (img.complete) {
+                if (img.naturalWidth === 0) {
+                    handleError(img, container);
+                } else {
+                    markLoaded(container);
+                }
+            }
+
+            img.addEventListener('load', () => {
+                markLoaded(container);
+            });
+
+            img.addEventListener('error', () => {
+                handleError(img, container);
+            });
+        });
+
+        function markLoaded(container) {
+            container.classList.add('has-image');
+            container.classList.remove('image-missing');
+            container.removeAttribute('role');
+            container.removeAttribute('aria-label');
+            container.removeAttribute('aria-hidden');
+        }
+
+        function handleError(image, container) {
+            const fallback = image.getAttribute('data-default-cover');
+            if (fallback && image.src !== fallback) {
+                image.src = fallback;
+                return;
+            }
+            container.classList.add('image-missing');
+            container.classList.remove('has-image');
+            const label = container.getAttribute('data-placeholder-label');
+            if (label) {
+                container.setAttribute('role', 'img');
+                container.setAttribute('aria-label', label);
+            }
+            container.removeAttribute('aria-hidden');
+            image.remove();
+        }
     }
 })();
