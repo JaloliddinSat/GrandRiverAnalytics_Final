@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if prev_url %}<link rel="prev" href="{{ base_url }}{{ prev_url }}" />{% endif %}
+{% if next_url %}<link rel="next" href="{{ base_url }}{{ next_url }}" />{% endif %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-hero blog-hero">
+    <div class="container">
+        <span class="pill">Research library</span>
+        <h1>Insight archive</h1>
+        <p>Deep-dive company write-ups, sector primers, and real-time scenario work from the Grand River Analytics desk.</p>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ url_for('rss_feed') }}">Subscribe to RSS</a>
+            <a class="button ghost" href="{{ url_for('contact') }}">Request briefing access</a>
+        </div>
+    </div>
+</section>
+<section class="container section blog-shell">
+    <div class="blog-controls" role="search">
+        <label for="search" class="visually-hidden">Filter posts</label>
+        <input id="search" type="search" placeholder="Search company, theme, or ticker" data-search-input />
+        <div class="blog-tag-list" aria-label="Filter by tag">
+            {% for tag in all_tags %}
+            <button class="tag" type="button" data-tag-filter="{{ tag }}">{{ tag }}</button>
+            {% else %}
+            <span class="muted">Tags coming soon.</span>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="blog-layout">
+        {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
+        <div class="blog-posts" id="blog-posts">
+            {% if posts %}
+                {% for post in posts %}
+                    {% set cover = post.cover_url or placeholder_cover %}
+                    <article class="post-card" data-post data-title="{{ post.title }} {{ post.excerpt }}" data-tags="{{ post.tags }}">
+                        <div class="post-card-media" data-fallback-container data-placeholder-label="Cover image for {{ post.title }}">
+                            <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
+                            <img
+                                src="{{ cover }}"
+                                alt="Cover image for {{ post.title }}"
+                                loading="lazy"
+                                data-fallback-image
+                                data-default-cover="{{ placeholder_cover }}"
+                            />
+                        </div>
+                        <div class="post-card-content">
+                            <p class="muted">{{ post.publish_date|format_date }}</p>
+                            <h2><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
+                            <p class="muted tags">
+                                {% for tag in post.tags|tag_list %}
+                                    <span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}
+                                {% endfor %}
+                            </p>
+                            <p>{{ post.excerpt }}</p>
+                            <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Open insight →</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p>No posts yet.</p>
+            {% endif %}
+        </div>
+        <aside class="blog-sidebar" aria-label="Research resources">
+            <div class="sidebar-card">
+                <h3>Research cadence</h3>
+                <p class="muted">We release flagship notes weekly, with flash updates around earnings, policy shifts, and corporate events.</p>
+            </div>
+            <div class="sidebar-card">
+                <h3>Need a custom take?</h3>
+                <p>Contact our analysts for bespoke deep dives, KPI trackers, and executive briefing sessions.</p>
+                <a class="read-link" href="{{ url_for('contact') }}">Connect with us →</a>
+            </div>
+        </aside>
+    </div>
+    <nav class="pagination" aria-label="Pagination">
+        {% if prev_url %}<a href="{{ prev_url }}" rel="prev">Previous</a>{% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if next_url %}<a href="{{ next_url }}" rel="next">Next</a>{% endif %}
+    </nav>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-hero team-hero">
+    <div class="container">
+        <span class="pill">Analyst collective</span>
+        <h1>The team translating signal into conviction.</h1>
+        <p>Meet the sector specialists, modelers, and storytellers behind Grand River Analytics’ independent equity research.</p>
+    </div>
+</section>
+<section class="container section">
+    <div class="section-title">
+        <h2>Research leadership</h2>
+        <p>Our analysts blend buy-side rigor with operator empathy, bringing firsthand experience from investment banks, corporate strategy desks, and growth-stage operators.</p>
+    </div>
+    <div class="team-grid">
+        {% for member in team_members %}
+        <article class="team-card">
+            <img src="{{ member.photo }}" alt="Portrait of {{ member.name }}" loading="lazy" width="320" height="220" />
+            <h2>{{ member.name }}</h2>
+            <p class="muted">{{ member.title }}</p>
+            <p>{{ member.bio }}</p>
+            <a href="{{ member.linkedin }}" class="read-link" target="_blank" rel="noopener">LinkedIn profile →</a>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+<section class="container section">
+    <div class="section-title">
+        <h2>How we collaborate</h2>
+        <p>Every engagement pairs clients with a lead analyst, a sector researcher, and a data specialist to ensure fast, thorough answers.</p>
+    </div>
+    <div class="feature-grid">
+        <article class="feature-card">
+            <h3>Analyst access</h3>
+            <p>Direct dialogue with the author of every note—no gatekeepers, no canned scripts.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Primary diligence</h3>
+            <p>We triangulate customer references, supplier interviews, and digital exhaust to validate narratives.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Execution support</h3>
+            <p>Follow-up models, KPI dashboards, and board-ready materials delivered on compressed timelines.</p>
+        </article>
+    </div>
+</section>
+{% endblock %}

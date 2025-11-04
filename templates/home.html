@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<style>
+    .floating-insight-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .floating-insight-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
+        color: rgba(244, 246, 251, 0.85);
+    }
+
+    .floating-insight-item span {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(138, 202, 255, 0.22);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #8acaff;
+    }
+
+    .coverage-highlights {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 18px;
+        margin-top: 32px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .coverage-highlights li {
+        list-style: none;
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(15, 27, 45, 0.12);
+        background: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+        color: #0f1b2d;
+    }
+
+    .insight-grid .post-card-content h3 {
+        margin: 0;
+        font-size: 1.05rem;
+    }
+
+    .insight-grid .post-card-content h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .insight-grid .post-card-content h3 a:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+        .coverage-highlights {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+    }
+</style>
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if org_json %}<script type="application/ld+json">{{ org_json|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="hero-shell">
+    <div class="container hero-grid">
+        <div class="hero-text">
+            <p class="eyebrow">Grand River Analytics</p>
+            <h1>Strategic equity intelligence for decisive capital allocation.</h1>
+            <p>We publish crisp, scenario-based research across financials, technology, energy, and consumer leaders—translating complex market structure shifts into actionable conviction.</p>
+            <div class="hero-actions">
+                <a class="button primary" href="{{ url_for('blog_index') }}">Explore research</a>
+                <a class="button ghost" href="{{ url_for('contact') }}">Request access</a>
+            </div>
+            <dl class="stat-list">
+                <div class="stat">
+                    <dt>45+</dt>
+                    <dd>Company deep dives published each year</dd>
+                </div>
+                <div class="stat">
+                    <dt>3</dt>
+                    <dd>Core sectors with multi-cycle expertise</dd>
+                </div>
+                <div class="stat">
+                    <dt>72 hrs</dt>
+                    <dd>Average turnaround for client follow-ups</dd>
+                </div>
+            </dl>
+        </div>
+        <aside class="hero-panel">
+            <h3>Focus areas</h3>
+            <ul class="hero-panel-list">
+                <li>
+                    <span>Financials</span>
+                    <strong>Money-center banks · payments · insurers</strong>
+                </li>
+                <li>
+                    <span>Technology</span>
+                    <strong>Cloud platforms · enterprise AI · software infrastructure</strong>
+                </li>
+                <li>
+                    <span>Energy &amp; consumer</span>
+                    <strong>Integrated energy · renewables · retail resilience</strong>
+                </li>
+            </ul>
+            <div class="floating-card" role="note">
+                <p>Subscribers receive annotated models, KPI trackers, and quarterly catalysts calendars.</p>
+                <div class="floating-insight-list">
+                    <div class="floating-insight-item"><span>01</span> Weekly positioning pulse</div>
+                    <div class="floating-insight-item"><span>02</span> Scenario stress tests</div>
+                    <div class="floating-insight-item"><span>03</span> Executive briefing decks</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+<section class="container section">
+    <div class="section-title">
+        <h2>Our coverage blueprint</h2>
+        <p>We combine field interviews, regulatory trackers, and differentiated KPI frameworks to map where durable value is accruing before consensus adjusts.</p>
+    </div>
+    <div class="feature-grid">
+        <article class="feature-card">
+            <h3>Structural trend mapping</h3>
+            <p>Multi-quarter views anchored by leading indicators, management cadence, and share-shift dynamics across subsectors.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Risk-framed valuation</h3>
+            <p>Sensitivity models that translate macro and idiosyncratic variables into probability-weighted valuation ranges.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Actionable deliverables</h3>
+            <p>Terse narratives, investor-ready exhibits, and implementation roadmaps tailored to boards, CIOs, and strategy leads.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Client alignment</h3>
+            <p>Dedicated analyst access, ad-hoc diligence support, and bespoke tear-sheets for priority watchlists.</p>
+        </article>
+    </div>
+</section>
+<section class="container section">
+    <div class="section-title">
+        <h2>Latest insights</h2>
+        <p>Recently published theses from our research desk. Each note blends bottom-up modeling, management tone analysis, and on-the-ground channel checks.</p>
+        <a class="read-link" href="{{ url_for('blog_index') }}">View the full archive →</a>
+    </div>
+    <div class="insight-grid">
+        {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
+        {% for post in posts %}
+        {% set cover = post.cover_url or placeholder_cover %}
+        <article class="post-card">
+            <div class="post-card-media" data-fallback-container data-placeholder-label="Cover image for {{ post.title }}">
+                <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
+                <img
+                    src="{{ cover }}"
+                    alt="Cover image for {{ post.title }}"
+                    loading="lazy"
+                    data-fallback-image
+                    data-default-cover="{{ placeholder_cover }}"
+                />
+            </div>
+            <div class="post-card-content">
+                <p class="muted">{{ post.publish_date|format_date }}</p>
+                <h3><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h3>
+                <p class="muted">
+                    {% for tag in post.tags|tag_list %}
+                        <span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}
+                    {% endfor %}
+                </p>
+                <p>{{ post.excerpt }}</p>
+                <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read insight →</a>
+            </div>
+        </article>
+        {% else %}
+        <p>No posts yet. Check back soon.</p>
+        {% endfor %}
+    </div>
+</section>
+<section class="container section">
+    <div class="section-title">
+        <h2>Mandates we support</h2>
+        <p>We work alongside executive teams, corporate development groups, and investment committees to validate conviction before capital is deployed.</p>
+    </div>
+    <ul class="coverage-highlights">
+        <li>C-suite strategy offsites</li>
+        <li>Board-level market briefings</li>
+        <li>Corporate venture diligence</li>
+        <li>Sector entry assessments</li>
+        <li>M&amp;A synergy validation</li>
+        <li>Investor day messaging</li>
+    </ul>
+</section>
+<section class="container section">
+    <div class="cta-band">
+        <h2>Ready to unlock sharper equity perspective?</h2>
+        <p>Schedule a working session with our lead analysts to explore how Grand River Analytics can extend your internal insights and accelerate decision cycles.</p>
+        <div class="cta-actions">
+            <a class="button primary" href="{{ url_for('contact') }}">Book a consultation</a>
+            <a class="button ghost" href="{{ url_for('team') }}">Meet the team</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

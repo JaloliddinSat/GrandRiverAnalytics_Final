@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<style>
+    .info-panel .coverage-highlights {
+        margin-top: 24px;
+        display: grid;
+        gap: 12px;
+        padding: 0;
+        margin-left: 0;
+    }
+
+    .info-panel .coverage-highlights li {
+        list-style: none;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(244, 246, 251, 0.25);
+        background: rgba(244, 246, 251, 0.1);
+        color: rgba(244, 246, 251, 0.9);
+    }
+</style>
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <span class="pill">Connect</span>
+        <h1>Let’s align on your next research mandate.</h1>
+        <p>Reach out for access to the full library, to scope a bespoke diligence project, or to schedule a standing analyst briefing.</p>
+    </div>
+</section>
+<section class="container section">
+    <div class="contact-grid">
+        <div class="contact-panel">
+            <h2>Send us a note</h2>
+            <p class="muted">We respond within one business day. Please include company tickers or topics you’d like to cover.</p>
+            <form method="post" name="contact" data-netlify="true" data-netlify-honeypot="website" novalidate>
+                <input type="hidden" name="form-name" value="contact" />
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" class="hp" />
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label for="message">How can we help?</label>
+                    <textarea id="message" name="message" rows="6" required></textarea>
+                </div>
+                <button type="submit" class="button primary">Send message</button>
+                {% if success %}
+                <p class="success-message">We received your message.</p>
+                {% endif %}
+            </form>
+        </div>
+        <aside class="info-panel">
+            <h2>Office &amp; channels</h2>
+            <p>250 Lafayette St.<br />Suite 400<br />New York, NY 10012</p>
+            <p><a href="mailto:research@grandriveranalytics.com">research@grandriveranalytics.com</a><br /><a href="tel:+12125551234">+1 (212) 555-1234</a></p>
+            <div class="map-placeholder" role="img" aria-label="Map placeholder"></div>
+            <ul class="coverage-highlights">
+                <li>Quarterly outlook briefings</li>
+                <li>Rapid-turn diligence support</li>
+                <li>Executive workshops</li>
+                <li>Capital markets prep</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+{% endblock %}
