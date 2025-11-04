@@ -29,15 +29,15 @@
     <header class="site-header">
         <div class="container header-inner">
             <a class="logo" href="{{ url_for('home') }}" aria-label="{{ settings.site_name }} home">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ settings.site_name }} logo" width="56" height="40" />
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ settings.site_name }} logo" width="36" height="36" />
+                <span>{{ settings.site_name }}</span>
             </a>
             <nav aria-label="Primary navigation">
                 <ul class="nav-list">
                     <li><a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a></li>
-                    <li><a href="{{ url_for('home') }}#about">About Us</a></li>
-                    <li><a href="{{ url_for('blog_index') }}" {% if request.endpoint in ['blog_index', 'post_detail'] %}aria-current="page"{% endif %}>Reports</a></li>
+                    <li><a href="{{ url_for('blog_index') }}" {% if request.endpoint in ['blog_index', 'post_detail'] %}aria-current="page"{% endif %}>Blog</a></li>
                     <li><a href="{{ url_for('team') }}" {% if request.endpoint == 'team' %}aria-current="page"{% endif %}>Team</a></li>
-                    <li><a href="{{ url_for('contact') }}" {% if request.endpoint == 'contact' %}aria-current="page"{% endif %}>Contact Us</a></li>
+                    <li><a href="{{ url_for('contact') }}" {% if request.endpoint == 'contact' %}aria-current="page"{% endif %}>Contact</a></li>
                     {% if session.get('admin_authenticated') %}
                     <li><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
                     {% endif %}
@@ -58,33 +58,12 @@
         {% block content %}{% endblock %}
     </main>
     <footer class="site-footer">
-        <div class="container footer-grid">
-            <div>
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ settings.site_name }} logo" width="72" height="48" />
-                <p class="muted">Independent equity research crafted by students at the University of Waterloo and Wilfrid Laurier University.</p>
+        <div class="container footer-content">
+            <p>© {{ current_year }} Aurelius Capital Research · This site provides research commentary. Not investment advice.</p>
+            <div class="footer-links">
+                <a href="https://www.linkedin.com/" rel="noopener" target="_blank">LinkedIn</a>
+                <a href="https://x.com" rel="noopener" target="_blank">X</a>
             </div>
-            <div>
-                <h3>Contact</h3>
-                <p>
-                    416-846-2766<br />
-                    <a href="mailto:uwlaurier@gmail.com">uwlaurier@gmail.com</a><br />
-                    200 University Ave W, Waterloo, ON N2L 3G1<br />
-                    75 University Ave W, Waterloo, ON N2L 3C5
-                </p>
-            </div>
-            <div>
-                <h3>Explore</h3>
-                <ul class="footer-nav">
-                    <li><a href="{{ url_for('home') }}">Home</a></li>
-                    <li><a href="{{ url_for('home') }}#about">About Us</a></li>
-                    <li><a href="{{ url_for('blog_index') }}">Reports</a></li>
-                    <li><a href="{{ url_for('team') }}">Team</a></li>
-                    <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="container footer-bottom">
-            <p>© {{ current_year }} Grand River Analytics · Research commentary only. Not investment advice.</p>
         </div>
     </footer>
 </body>
