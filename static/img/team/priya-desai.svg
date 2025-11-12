@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">Illustrated placeholder portrait</title>
+  <desc id="desc">Soft blue silhouette on a light background</desc>
+  <rect width="240" height="240" fill="#f5f7fa" />
+  <circle cx="120" cy="92" r="52" fill="#d1dcec" />
+  <path d="M52 204c16-48 56-72 68-72s52 24 68 72z" fill="#e1e9f4" />
+  <text x="120" y="214" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="36" font-weight="600" fill="#8acaff">PD</text>
+</svg>

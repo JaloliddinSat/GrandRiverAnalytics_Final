@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% if blog_json %}<script type="application/ld+json">{{ blog_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+{% if preview %}
+<div class="preview-banner" role="status">Preview mode — this post is visible only to admins.</div>
+{% endif %}
+<article class="container article article--theme-{{ hero_style }}">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('blog_index') }}">Blog</a></li>
+            <li aria-current="page">{{ post.title }}</li>
+        </ol>
+    </nav>
+    <header class="article-header">
+        {% if post.hero_kicker %}<p class="kicker">{{ post.hero_kicker }}</p>{% endif %}
+        <p class="muted">{{ post.publish_date|format_date }} · {{ read_time }} minute read</p>
+        <h1>{{ post.title }}</h1>
+        <p class="muted tags">{% for tag in post.tags|tag_list %}<span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}{% endfor %}</p>
+        <div class="share-links">
+            <a href="https://x.com/intent/tweet?url={{ meta.canonical|urlencode }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener">Share on X</a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ meta.canonical|urlencode }}&title={{ post.title|urlencode }}" target="_blank" rel="noopener">Share on LinkedIn</a>
+        </div>
+        {% if summary_points %}
+        <ul class="summary-points">
+            {% for point in summary_points %}
+            <li>{{ point }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </header>
+    {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
+    {% set cover = post.cover_url or placeholder_cover %}
+    <figure class="article-cover" data-fallback-container data-placeholder-label="Cover image for {{ post.title }}" {% if not post.cover_url %}role="img" aria-label="Illustrative cover for {{ post.title }}"{% endif %}>
+        <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
+        <img src="{{ cover }}" alt="Cover image for {{ post.title }}" loading="lazy" data-fallback-image data-default-cover="{{ placeholder_cover }}" />
+    </figure>
+    {% if post.highlight_quote %}
+    <blockquote class="article-quote">{{ post.highlight_quote }}</blockquote>
+    {% endif %}
+    <aside class="toc" aria-label="Table of contents">
+        <h2>On this page</h2>
+        <nav id="toc"></nav>
+    </aside>
+    <div class="article-body" data-article-content>
+        {{ post.content|safe }}
+    </div>
+    {% if post.cta_label and post.cta_url %}
+    <div class="article-cta">
+        <a class="button primary" href="{{ post.cta_url }}" target="_blank" rel="noopener">{{ post.cta_label }}</a>
+    </div>
+    {% endif %}
+</article>
+<section class="container section more-posts">
+    <h2>More from the blog</h2>
+    <div class="latest-grid">
+        {% for item in more_posts %}
+        <article class="post-card post-card--compact">
+            <p class="muted">{{ item.publish_date|format_date }}</p>
+            <h3><a href="{{ url_for('post_detail', slug=item.slug) }}">{{ item.title }}</a></h3>
+            <p>{{ item.excerpt }}</p>
+            <a class="read-link" href="{{ url_for('post_detail', slug=item.slug) }}">Read →</a>
+        </article>
+        {% else %}
+        <p>No additional posts available.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
