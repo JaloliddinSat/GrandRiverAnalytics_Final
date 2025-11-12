@@ -7,6 +7,7 @@ Grand River Analytics is a minimalist Flask-based publishing platform for equity
 - Flask + SQLite stack with seed content for five sample posts
 - Secure single-user admin with hashed password, CSRF protection, and TinyMCE editing
 - Editorial admin extras: live slug syncing, save-and-preview workflow, duplication, featured flags, and hero styling controls
+- TinyMCE editing surface with inline image support for charts and exhibits
 - SEO-friendly templates with canonical tags, Open Graph, Twitter cards, and JSON-LD (Organization, WebSite, Breadcrumb, BlogPosting)
 - RSS feed, XML sitemap, and robots.txt
 - Accessible, responsive front-end with vanilla CSS/JS and system font stack
@@ -56,6 +57,7 @@ Grand River Analytics is a minimalist Flask-based publishing platform for equity
 - **SEO overrides** – Provide custom meta title/description per post when you need search-friendly copy distinct from the on-page heading.
 - **Featured placement** – Toggle the “Feature on home page” checkbox to spotlight a report in the home page carousel and add a badge on the blog index.
 - **Preview & duplication** – Use “Save & preview” for an instant draft preview in a new tab, and duplicate any entry from the dashboard to jumpstart variant write-ups.
+- **Inline charts** – Use the TinyMCE image button or paste screenshots directly into the editor. Images are stored inline with the report so they render exactly where you place them.
 
 ## Testing
 
@@ -75,18 +77,27 @@ The tests instantiate the Flask app, hit key routes, and validate RSS/Sitemap re
 - TinyMCE loads from its CDN. If deploying to a restricted network, host the asset internally or allowlist the domain.
 - Replace placeholder logos and imagery under `static/img/` with brand-specific assets.
 
-### Deploying the public site to Netlify
+### Deploying on Render (dynamic hosting)
 
-Netlify’s CDN only serves static files, so this repository includes a lightweight exporter that renders the Flask routes into HTML during the build.
+Render’s Python services provide the always-on environment needed for the admin tools and TinyMCE editing.
+
+1. Commit the included `render.yaml` blueprint (already present in this repository).
+2. Create a new **Blueprint** on Render pointing at the GitHub repository. Render will read `render.yaml` and provision a free web service.
+3. During setup, supply environment variables for `SECRET_KEY`, `ADMIN_PASSWORD`, and update `BASE_URL` to your Render domain (e.g., `https://grand-river-analytics.onrender.com`).
+4. Deploy. Render runs `pip install -r requirements.txt` and launches the site via `gunicorn app:app` (matching the provided `Procfile`).
+5. Run `render deploy`/auto-deploy on pushes. SQLite persists inside the Render disk for the service; for multi-instance scaling consider moving to a managed database.
+
+### Optional: Static export to Netlify
+
+If you still need a static snapshot (for example, as a CDN edge cache), the project ships with `build_static.py` and `netlify.toml`.
 
 1. Confirm `BASE_URL` in `.env` points at your Netlify URL (for example `https://grandriveranalytics.netlify.app`).
-2. Commit `netlify.toml` and `build_static.py` (already present in this repo).
-3. Connect the repository in Netlify. The dashboard will read the build settings from `netlify.toml`:
+2. Connect the repository in Netlify. The dashboard will read the build settings from `netlify.toml`:
    - **Build command:** `pip install -r requirements.txt && python build_static.py`
    - **Publish directory:** `netlify_build`
-4. Deploy. The generated site includes all public pages, RSS, sitemap, robots.txt, and post detail pages. The contact form is configured with `data-netlify` so submissions continue to work via Netlify Forms.
+3. Deploy. The generated site includes all public pages, RSS, sitemap, robots.txt, and post detail pages. The contact form is configured with `data-netlify` so submissions continue to work via Netlify Forms.
 
-> **Note:** The publishing/admin interface requires the live Flask application and a writable database. On Netlify the `/admin` routes are redirected to a notice explaining that admin editing is unavailable on the static build. Host the dynamic app on infrastructure that supports Python (Render, Fly.io, Railway, etc.) when you need authoring capabilities.
+> **Note:** Static exports are read-only and redirect `/admin` to an informational notice. Use Render (or another Python host) when you need to author or edit content.
 
 ## Project structure
 

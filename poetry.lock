@@ -40,6 +40,17 @@ Jinja2 = ">=3.1.2"
 Werkzeug = ">=3.0.0"
 
 [[package]]
+name = "gunicorn"
+version = "21.2.0"
+description = "WSGI HTTP Server for UNIX"
+optional = false
+python-versions = ">=3.7"
+files = []
+
+[package.dependencies]
+packaging = ">=20.0"
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 description = "iniconfig: brain-dead simple config-ini parsing"

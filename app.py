@@ -366,7 +366,7 @@ def register_routes(app: Flask) -> None:
         canonical = f"{settings['base_url']}/admin-unavailable/"
         meta = seo.build_meta(
             title=f"Admin Offline · {settings['site_name']}",
-            description="The static Netlify deployment exposes only the public site. Run the Flask app on Python-capable hosting to edit posts.",
+            description="This deployment exposes the public site only. Run the Flask service on dynamic hosting to access the admin tools.",
             canonical=canonical,
         )
         breadcrumbs = seo.jsonld_breadcrumbs(
@@ -776,8 +776,10 @@ def register_routes(app: Flask) -> None:
         return jsonify({"status": "ok"})
 
 
+app = create_app()
+
+
 def main() -> None:
-    app = create_app()
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False)
 
 

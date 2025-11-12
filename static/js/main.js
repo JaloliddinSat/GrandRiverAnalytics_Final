@@ -5,11 +5,13 @@
         buildTableOfContents();
         initSlugSync();
         initImageFallbacks();
+        ensureEmptyState();
     });
 
     function initSearchFilter() {
         const searchInput = document.querySelector('[data-search-input]');
         if (!searchInput) return;
+        const list = document.querySelector('[data-post-list]');
         const posts = Array.from(document.querySelectorAll('[data-post]'));
         searchInput.addEventListener('input', function () {
             const term = this.value.toLowerCase();
@@ -17,30 +19,56 @@
                 const haystack = (post.getAttribute('data-title') || '').toLowerCase();
                 post.style.display = haystack.includes(term) ? '' : 'none';
             });
+            updateEmptyState(list, posts);
         });
     }
 
     function initTagFilter() {
         const tagButtons = document.querySelectorAll('[data-tag-filter]');
         if (!tagButtons.length) return;
+        const list = document.querySelector('[data-post-list]');
         const posts = Array.from(document.querySelectorAll('[data-post]'));
+        const defaultButton = document.querySelector('[data-tag-filter=""]');
         tagButtons.forEach((button) => {
             button.addEventListener('click', function () {
-                const tag = this.getAttribute('data-tag-filter');
-                const isActive = this.classList.toggle('active');
-                tagButtons.forEach((other) => {
-                    if (other !== this) other.classList.remove('active');
-                });
+                const tag = (this.getAttribute('data-tag-filter') || '').toLowerCase();
+                const wasActive = this.classList.contains('active');
+                tagButtons.forEach((other) => other.classList.remove('active'));
+                let activeTag = '';
+                if (!wasActive) {
+                    this.classList.add('active');
+                    activeTag = tag;
+                } else if (defaultButton) {
+                    defaultButton.classList.add('active');
+                } else {
+                    this.classList.add('active');
+                }
                 posts.forEach((post) => {
                     const tags = (post.getAttribute('data-tags') || '').toLowerCase();
-                    if (!isActive || tags.includes(tag.toLowerCase())) {
+                    if (!activeTag || tags.includes(activeTag)) {
                         post.style.display = '';
                     } else {
                         post.style.display = 'none';
                     }
                 });
+                updateEmptyState(list, posts);
             });
         });
+    }
+
+    function updateEmptyState(list, posts) {
+        if (!list) return;
+        const emptyState = list.querySelector('[data-empty-state]');
+        if (!emptyState) return;
+        const hasVisible = posts.some((post) => post.style.display !== 'none');
+        emptyState.hidden = hasVisible;
+    }
+
+    function ensureEmptyState() {
+        const list = document.querySelector('[data-post-list]');
+        if (!list) return;
+        const posts = Array.from(list.querySelectorAll('[data-post]'));
+        updateEmptyState(list, posts);
     }
 
     function buildTableOfContents() {
