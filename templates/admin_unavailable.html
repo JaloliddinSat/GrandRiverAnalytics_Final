@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container section">
+    <h1>Admin not available on this deploy</h1>
+    <p class="muted">This read-only build publishes a static snapshot of Grand River Analytics.
+        Editing tools require the live Flask service with a writable database, which is available on the dynamic deployment.</p>
+    <p>If you need to publish or update research posts, run the Flask app on Python-capable hosting such as Render, Fly.io, or Railway.</p>
+</section>
+{% endblock %}

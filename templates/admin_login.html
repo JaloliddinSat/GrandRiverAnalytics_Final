@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body_class %}admin-shell{% endblock %}
+{% block content %}
+<section class="admin-hero">
+    <div class="container narrow center">
+        <p class="eyebrow">Grand River Analytics</p>
+        <h1>Operations Console</h1>
+        <p class="muted">Authenticate to manage reports, featured placements, and publishing workflows.</p>
+    </div>
+</section>
+<section class="section">
+    <div class="container narrow">
+        <div class="admin-panel auth-panel">
+            <h2>Admin login</h2>
+            <form method="post" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="button primary">Log in</button>
+            </form>
+            {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
