@@ -1,3 +1,4 @@
+import csv
 import os
 import sqlite3
 from contextlib import closing
@@ -9,10 +10,26 @@ from flask import current_app, g
 
 
 def _database_path() -> Path:
+    url_override = os.getenv("DATABASE_URL", "").strip()
+    if url_override.lower().startswith("sqlite:///"):
+        candidate = url_override.split("sqlite:///", 1)[1]
+        if candidate:
+            return Path(candidate)
+    path_override = os.getenv("DATABASE_PATH", "").strip()
+    if path_override:
+        return Path(path_override)
     database_name = os.getenv("DATABASE", "grandriver.db")
     if current_app:
         return Path(current_app.instance_path) / database_name
     return Path(database_name)
+
+
+def _backup_csv_path() -> Path:
+    override = os.getenv("POSTS_BACKUP_CSV", "").strip()
+    if override:
+        return Path(override)
+    database_dir = _database_path().parent
+    return database_dir / "posts_backup.csv"
 
 
 def get_db() -> sqlite3.Connection:
@@ -252,3 +269,58 @@ def seed_posts() -> None:
         )
 
     get_db().commit()
+    backup_posts_to_csv()
+
+
+def backup_posts_to_csv() -> None:
+    try:
+        rows = query_all(
+            """
+            SELECT id, title, slug, excerpt, content, cover_url, tags, published, created_at, updated_at,
+                   publish_date, meta_title, meta_description, hero_kicker, hero_style, highlight_quote,
+                   summary_points, cta_label, cta_url, featured
+            FROM posts
+            ORDER BY id
+            """
+        )
+    except Exception as exc:  # pragma: no cover - defensive logging
+        if current_app:
+            current_app.logger.exception("Unable to fetch posts for CSV backup: %s", exc)
+        return
+
+    csv_path = _backup_csv_path()
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fieldnames = [
+        "id",
+        "title",
+        "slug",
+        "excerpt",
+        "content",
+        "cover_url",
+        "tags",
+        "published",
+        "created_at",
+        "updated_at",
+        "publish_date",
+        "meta_title",
+        "meta_description",
+        "hero_kicker",
+        "hero_style",
+        "highlight_quote",
+        "summary_points",
+        "cta_label",
+        "cta_url",
+        "featured",
+    ]
+
+    try:
+        with csv_path.open("w", newline="", encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                row_dict = dict(row)
+                writer.writerow({field: row_dict.get(field) for field in fieldnames})
+    except Exception as exc:  # pragma: no cover - defensive logging
+        if current_app:
+            current_app.logger.exception("Unable to write posts CSV backup: %s", exc)

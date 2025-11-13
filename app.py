@@ -30,7 +30,7 @@ from utils.auth import (
     login_required,
     verify_password,
 )
-from utils.db import close_db, execute, init_db, query_all, query_one
+from utils.db import backup_posts_to_csv, close_db, execute, init_db, query_all, query_one
 
 load_dotenv()
 
@@ -576,6 +576,7 @@ def register_routes(app: Flask) -> None:
     @login_required
     def admin_delete(post_id: int) -> Response:
         execute("DELETE FROM posts WHERE id = ?", (post_id,))
+        backup_posts_to_csv()
         flash("Post deleted.", "success")
         return redirect(url_for("admin_dashboard"))
 
@@ -638,6 +639,7 @@ def register_routes(app: Flask) -> None:
                 post.get("cta_url"),
             ),
         )
+        backup_posts_to_csv()
         flash("Draft copied.", "success")
         return redirect(url_for("admin_edit", post_id=new_id))
 
@@ -771,6 +773,7 @@ def register_routes(app: Flask) -> None:
                     existing["id"],
                 ),
             )
+            backup_posts_to_csv()
             flash("Post updated.", "success")
             if action == "preview":
                 return redirect(url_for("admin_preview", post_id=existing["id"]))
@@ -822,6 +825,7 @@ def register_routes(app: Flask) -> None:
                 featured,
             ),
         )
+        backup_posts_to_csv()
         flash("Post created.", "success")
         if action == "preview":
             return redirect(url_for("admin_preview", post_id=new_id))

@@ -6,6 +6,10 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     autoDeploy: true
+    disks:
+      - name: data
+        mountPath: /var/data
+        sizeGB: 1
     envVars:
       - key: SECRET_KEY
         sync: false
@@ -13,5 +17,7 @@ services:
         sync: false
       - key: BASE_URL
         value: https://grand-river-analytics.onrender.com
-      - key: DATABASE
-        value: grandriver.db
+      - key: DATABASE_PATH
+        value: /var/data/grandriver.db
+      - key: POSTS_BACKUP_CSV
+        value: /var/data/posts_backup.csv
