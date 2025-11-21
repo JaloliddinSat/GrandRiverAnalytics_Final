@@ -342,14 +342,14 @@ def register_routes(app: Flask) -> None:
                 "name": "Jalol Satimov",
                 "title": "Co-founder & Analyst",
                 "bio": "Currently in the Math/Business Administration Degree in the University of Waterloo.",
-                "photo": url_for("static", filename="img/team/jalol-satimov.png"),
+                "photo": url_for("static", filename="img/team/jalol_satimov.png"),
                 "linkedin": "https://www.linkedin.com/in/jalolsatimov/?originalSubdomain=ca",
             },
             {
                 "name": "Harry Zhu",
                 "title": "Co-founder & Analyst",
                 "bio": "Pursuing a Business Administration (BBA) + Financial Mathematics and Analytics at the University of Laurier.",
-                "photo": url_for("static", filename="img/team/harry-zhu.png"),
+                "photo": url_for("static", filename="img/team/harry_zhu.png"),
                 "linkedin": "https://www.linkedin.com/in/harryzhupengzhao/",
             },
             {
