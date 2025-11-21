@@ -7,7 +7,7 @@ services:
     startCommand: gunicorn app:app
     autoDeploy: true
     disk:
-      - name: data
+        name: data
         mountPath: /var/data
         sizeGB: 1
     envVars:
