@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if prev_url %}<link rel="prev" href="{{ base_url }}{{ prev_url }}" />{% endif %}
+{% if next_url %}<link rel="next" href="{{ base_url }}{{ next_url }}" />{% endif %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--reports">
+    <div class="container narrow center">
+        <h1>Research Library</h1>
+        <p>Explore Grand River Analytics write-ups spanning financials, technology, energy, and consumer names.</p>
+    </div>
+</section>
+<section class="section" id="reports">
+    <div class="container blog-layout">
+        <div class="blog-feed" data-post-list>
+            {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
+            {% for post in posts %}
+            {% set cover = post.cover_url or placeholder_cover %}
+            {% set theme = post.hero_style or 'light' %}
+            <article class="post-card post-card--{{ theme }} {% if post.featured %}post-card--featured{% endif %}" data-post data-title="{{ post.title }} {{ post.excerpt }}" data-tags="{{ post.tags or '' }}">
+                <div class="post-card-media" data-fallback-container data-placeholder-label="Cover image for {{ post.title }}">
+                    <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
+                    <img src="{{ cover }}" alt="Cover image for {{ post.title }}" loading="lazy" data-fallback-image data-default-cover="{{ placeholder_cover }}" />
+                </div>
+                <div class="post-card-content">
+                    <div class="post-card-meta">
+                        {% if post.hero_kicker %}<p class="kicker">{{ post.hero_kicker }}</p>{% endif %}
+                        <p class="muted">{{ post.publish_date|format_date }}</p>
+                    </div>
+                    <h2><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
+                    <p class="muted tags">
+                        {% for tag in post.tags|tag_list %}
+                        <span class="tag">{{ tag }}</span>{% if not loop.last %} {% endif %}
+                        {% endfor %}
+                    </p>
+                    <p>{{ post.excerpt }}</p>
+                    <div class="card-actions">
+                        <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read report →</a>
+                        {% if post.featured %}<span class="status status-featured">Featured</span>{% endif %}
+                    </div>
+                </div>
+            </article>
+            {% else %}
+            <p class="muted">No posts yet. Check back soon.</p>
+            {% endfor %}
+            <p class="muted no-results" data-empty-state hidden>No reports match your current search.</p>
+        </div>
+        <div class="blog-filters" aria-label="Report filters">
+            <div class="filter-block">
+                <h2>Filter reports</h2>
+                <label class="input-label" for="blog-search">Search</label>
+                <input id="blog-search" type="search" placeholder="Search titles or excerpts" data-search-input />
+                <p class="muted small">Type a ticker, theme, or keyword to narrow the list.</p>
+            </div>
+            <div class="filter-block">
+                <h3>Tags</h3>
+                <div class="tag-pills">
+                    <button type="button" class="tag-pill active" data-tag-filter="">All</button>
+                    {% for tag in all_tags %}
+                    <button type="button" class="tag-pill" data-tag-filter="{{ tag }}">{{ tag }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="filter-block">
+                <p class="muted"><strong>Need something specific?</strong><br />Reach out via the contact page for bespoke sector analysis.</p>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <nav class="pagination" aria-label="Pagination">
+            {% if prev_url %}<a href="{{ prev_url }}" rel="prev">Previous</a>{% endif %}
+            <span>Page {{ page }} of {{ total_pages }}</span>
+            {% if next_url %}<a href="{{ next_url }}" rel="next">Next</a>{% endif %}
+        </nav>
+    </div>
+</section>
+{% endblock %}

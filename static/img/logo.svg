@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80" viewBox="0 0 200 80" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">Grand River Analytics</title>
+  <desc id="logoDesc">Wordmark logo for Grand River Analytics</desc>
+  <rect width="200" height="80" fill="#ffffff"/>
+  <text x="16" y="38" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="28" fill="#111111">Grand River</text>
+  <text x="16" y="60" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="24" fill="#111111" opacity="0.85">Analytics</text>
+</svg>
