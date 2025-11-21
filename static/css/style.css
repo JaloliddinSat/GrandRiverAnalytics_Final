@@ -156,7 +156,7 @@ ul, ol {
 }
 
 .hero-image {
-    margin: 0.75rem auto 1.75rem;
+    margin: 0.75rem auto 3.5rem;
     max-width: min(56rem, 95vw);
     position: relative;
     border-radius: 0.75rem;
