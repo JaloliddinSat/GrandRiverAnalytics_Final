@@ -144,7 +144,7 @@ ul, ol {
 }
 
 .hero-text h1 {
-    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+    font-size: clamp(1.5rem, 0.5vw, 2.25rem);
     font-weight: 300;
 }
 
