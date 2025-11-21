@@ -10,26 +10,34 @@ from flask import current_app, g
 
 
 def _database_path() -> Path:
+    """Resolve the SQLite path, favoring explicit env overrides."""
+
+    path_override = os.getenv("DATABASE_PATH", "").strip()
+    if path_override:
+        return Path(path_override)
+
     url_override = os.getenv("DATABASE_URL", "").strip()
     if url_override.lower().startswith("sqlite:///"):
         candidate = url_override.split("sqlite:///", 1)[1]
         if candidate:
             return Path(candidate)
-    path_override = os.getenv("DATABASE_PATH", "").strip()
-    if path_override:
-        return Path(path_override)
+
     database_name = os.getenv("DATABASE", "grandriver.db")
-    if current_app:
-        return Path(current_app.instance_path) / database_name
     return Path(database_name)
 
 
 def _backup_csv_path() -> Path:
-    override = os.getenv("POSTS_BACKUP_CSV", "").strip()
+    """Resolve the CSV backup destination for report exports."""
+
+    override = os.getenv("REPORTS_CSV_PATH", "").strip()
+    legacy_override = os.getenv("POSTS_BACKUP_CSV", "").strip()
+
     if override:
         return Path(override)
-    database_dir = _database_path().parent
-    return database_dir / "posts_backup.csv"
+    if legacy_override:
+        return Path(legacy_override)
+
+    return Path("reports_backup.csv")
 
 
 def get_db() -> sqlite3.Connection:

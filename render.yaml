@@ -19,5 +19,5 @@ services:
         value: https://grand-river-analytics.onrender.com
       - key: DATABASE_PATH
         value: /var/data/grandriver.db
-      - key: POSTS_BACKUP_CSV
-        value: /var/data/posts_backup.csv
+      - key: REPORTS_CSV_PATH
+        value: /var/data/reports_backup.csv
