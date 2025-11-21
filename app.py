@@ -72,7 +72,7 @@ def get_settings() -> dict[str, Any]:
     else:
         settings = {
             "site_name": "Grand River Analytics",
-            "site_description": "Independent equity research across financials, technology, and consumer sectors.",
+            "site_description": "Independent equity research across global markets.",
             "base_url": os.getenv("BASE_URL", "http://localhost:5000"),
         }
     g._settings = settings  # type: ignore[attr-defined]
