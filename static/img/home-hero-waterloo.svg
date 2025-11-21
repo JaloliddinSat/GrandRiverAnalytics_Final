@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Stylized illustration of the University of Waterloo entrance</title>
+  <desc id="desc">Minimal vector illustration showing the University of Waterloo entrance sign and surrounding landscape.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <linearGradient id="sign" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#1f2937" />
+    </linearGradient>
+    <linearGradient id="ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e5f4ff" />
+      <stop offset="100%" stop-color="#c7e0ff" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)" />
+  <g opacity="0.45" fill="#0f172a">
+    <path d="M120 140h80l-40 120z" opacity="0.1" />
+    <path d="M820 120h60l-30 120z" opacity="0.08" />
+    <circle cx="220" cy="180" r="42" opacity="0.12" />
+    <circle cx="760" cy="160" r="35" opacity="0.12" />
+  </g>
+  <path d="M0 320h960v120c-120 40-240 60-360 60s-240-20-360-60-240-40-240-40z" fill="url(#ground)" />
+  <g transform="translate(140 250)">
+    <rect width="680" height="150" rx="20" fill="url(#sign)" />
+    <rect x="18" y="32" width="644" height="86" rx="12" fill="#0f172a" />
+    <text x="40" y="86" font-family="'adelle-sans','Adelle Sans','Helvetica Neue',Arial,sans-serif" font-size="48" fill="#fbbf24" letter-spacing="0.08em">
+      UNIVERSITY OF WATERLOO
+    </text>
+  </g>
+  <g fill="#1e293b" opacity="0.6">
+    <rect x="80" y="260" width="40" height="140" rx="12" />
+    <rect x="840" y="230" width="36" height="170" rx="12" />
+  </g>
+  <g fill="#0f172a" opacity="0.2">
+    <path d="M320 220h60v140h-60z" />
+    <path d="M600 210h72v150h-72z" />
+    <path d="M700 200h40v160h-40z" />
+  </g>
+  <g fill="#34d399" opacity="0.65">
+    <ellipse cx="200" cy="380" rx="90" ry="32" />
+    <ellipse cx="760" cy="360" rx="100" ry="28" />
+  </g>
+</svg>

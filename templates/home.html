@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if org_json %}<script type="application/ld+json">{{ org_json|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+{% set hero_fallback = url_for('static', filename='img/home-hero-waterloo.svg') %}
+{% set hero_image = "https://images.squarespace-cdn.com/content/v1/5ae1c2b289c1729832247bf3/1538074759940-MVFMUADYF5ZSVBNUFDY7/uwaterloo-sign.jpg?format=1500w" %}
+{% set about_fallback = url_for('static', filename='img/home-quantum.svg') %}
+{% set about_image = "https://images.squarespace-cdn.com/content/v1/580fdc2ae6f2e1ef5a2b5e4f/1585930958673-HMWPF7AOLZWZJ45CFY47/Quantum-Nano+Centre+University+of+Waterloo.jpg?format=1500w" %}
+<section class="hero">
+    <div class="container narrow hero-text">
+        <h1>Using rigorous qualitative techniques to produce research equity reports. The ultimate objective is to enable individuals to view professional analysis done by students of Waterloo and Laurier.</h1>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ url_for('blog_index') }}">Learn More</a>
+        </div>
+    </div>
+    <div class="hero-image" data-fallback-container data-placeholder-label="University of Waterloo main entrance">
+        <span class="media-fallback" aria-hidden="true">UW</span>
+        <img src="{{ hero_image }}" alt="University of Waterloo main entrance sign" loading="lazy" data-fallback-image data-default-cover="{{ hero_fallback }}" referrerpolicy="no-referrer" />
+    </div>
+</section>
+<section class="section latest-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Latest Research</h2>
+            <a class="text-link" href="{{ url_for('blog_index') }}">Browse all reports →</a>
+        </div>
+        <div class="featured-grid">
+            {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
+            {% for post in posts %}
+            {% set theme = post.hero_style or 'light' %}
+            {% set cover = post.cover_url or placeholder_cover %}
+            <article class="feature-card feature-card--{{ theme }}">
+                <div class="feature-card-media" data-fallback-container data-placeholder-label="Cover image for {{ post.title }}">
+                    <span class="media-fallback" aria-hidden="true">{{ post.title[0] }}</span>
+                    <img src="{{ cover }}" alt="Cover image for {{ post.title }}" loading="lazy" data-fallback-image data-default-cover="{{ placeholder_cover }}" />
+                </div>
+                <div class="feature-card-body">
+                    {% if post.hero_kicker %}<p class="kicker">{{ post.hero_kicker }}</p>{% endif %}
+                    <h3><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h3>
+                    <p class="muted">{{ post.publish_date|format_date }}</p>
+                    <p>{{ post.excerpt }}</p>
+                    <div class="card-actions">
+                        <a class="read-link" href="{{ url_for('post_detail', slug=post.slug) }}">Read report →</a>
+                        {% if post.featured %}<span class="status status-featured">Featured</span>{% endif %}
+                    </div>
+                </div>
+            </article>
+            {% else %}
+            <p>No published research yet. Check back soon.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<section id="about" class="section about-section">
+    <div class="container narrow">
+        <h2>About Us</h2>
+        <p><strong>Grand River Analytics</strong> is a student-run financial publishing website, focused on showcasing qualitative techniques through equity reports. The goal is to provide an outlet to clearly display our technical analysis skills to future employers or those similarly interested in the topic.</p>
+        <p>The name <strong>Grand River Analytics</strong> originates from the Grand River, a river which flows through both the universities of Waterloo and Laurier, the place of study for both members of the team.</p>
+    </div>
+    <div class="feature-image" data-fallback-container data-placeholder-label="University of Waterloo Quantum-Nano Centre">
+        <span class="media-fallback" aria-hidden="true">QNC</span>
+        <img src="{{ about_image }}" alt="University of Waterloo Quantum-Nano Centre" loading="lazy" data-fallback-image data-default-cover="{{ about_fallback }}" referrerpolicy="no-referrer" />
+    </div>
+</section>
+<section class="section cta-section">
+    <div class="container narrow center">
+        <p>We currently have two members—seen on the Team page—focused on keeping the biweekly deadline of reports.</p>
+        <a class="button" href="{{ url_for('team') }}">Team Page</a>
+    </div>
+</section>
+{% endblock %}
