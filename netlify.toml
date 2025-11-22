@@ -1,0 +1,16 @@
+[build]
+  command = "pip install -r requirements.txt && python build_static.py"
+  publish = "netlify_build"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin-unavailable/"
+  status = 404
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin-unavailable/"
+  status = 404

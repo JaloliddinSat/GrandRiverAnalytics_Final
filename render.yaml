@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: grand-river-analytics
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    autoDeploy: true
+    disks:
+      - name: data
+        mountPath: /var/data
+        sizeGB: 1
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: BASE_URL
+        value: https://grand-river-analytics.onrender.com
+      - key: DATABASE_PATH
+        value: /var/data/grandriver.db
+      - key: REPORTS_CSV_PATH
+        value: /var/data/reports_backup.csv

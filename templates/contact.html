@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block head_extra %}
+{% if breadcrumbs %}<script type="application/ld+json">{{ breadcrumbs|tojson }}</script>{% endif %}
+{% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container narrow center">
+        <h1>Contact Us</h1>
+        <p>Reach out for report access, collaboration opportunities, or campus events.</p>
+    </div>
+</section>
+<section class="section">
+    <div class="container contact-grid">
+        <div class="contact-panel">
+            <h2>Send a message</h2>
+            <form method="post" name="contact" data-netlify="true" data-netlify-honeypot="website" novalidate>
+                <input type="hidden" name="form-name" value="contact" />
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" class="hp" />
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="6" required></textarea>
+                </div>
+                <button type="submit" class="button primary">Send Message</button>
+                {% if success %}
+                <p class="success-message">We received your message.</p>
+                {% endif %}
+            </form>
+        </div>
+        <aside class="info-panel">
+            <h2>Visit</h2>
+            <p>Grand River Analytics<br />200 University Ave W, Waterloo, ON N2L 3G1<br />75 University Ave W, Waterloo, ON N2L 3C5</p>
+            <p><a href="mailto:uwlaurier@gmail.com">uwlaurier@gmail.com</a><br /><a href="tel:+14168462766">416-846-2766</a></p>
+            <div class="map-placeholder" role="img" aria-label="Map placeholder"></div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
