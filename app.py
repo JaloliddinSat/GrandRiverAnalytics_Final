@@ -4,6 +4,7 @@ import json
 import math
 import os
 import re
+import secrets
 from datetime import datetime
 from typing import Any
 
@@ -35,27 +36,68 @@ from utils.db import backup_posts_to_csv, close_db, execute, init_db, query_all,
 load_dotenv()
 
 
+def _resolve_secret_key_path(instance_path: str) -> str:
+    explicit_path = os.getenv("SECRET_KEY_FILE", "").strip()
+    if explicit_path:
+        return explicit_path
+    db_path = os.getenv("DATABASE_PATH", "").strip()
+    if db_path:
+        base_dir = os.path.dirname(db_path)
+        if base_dir:
+            return os.path.join(base_dir, "secret_key.txt")
+    return os.path.join(instance_path, "secret_key.txt")
+
+
+def _load_or_create_secret_key(instance_path: str) -> str:
+    env_key = os.getenv("SECRET_KEY", "").strip()
+    if env_key:
+        return env_key
+
+    key_path = _resolve_secret_key_path(instance_path)
+    try:
+        os.makedirs(os.path.dirname(key_path), exist_ok=True)
+        if os.path.exists(key_path):
+            with open(key_path, "r", encoding="utf-8") as fh:
+                existing = fh.read().strip()
+                if existing:
+                    return existing
+        generated = secrets.token_urlsafe(64)
+        with open(key_path, "w", encoding="utf-8") as fh:
+            fh.write(generated)
+        return generated
+    except OSError:
+        return secrets.token_urlsafe(64)
+
+
 def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", template_folder="templates")
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", os.urandom(24))
+    os.makedirs(app.instance_path, exist_ok=True)
+
+    app.config["SECRET_KEY"] = _load_or_create_secret_key(app.instance_path)
     app.config["BASE_URL"] = os.getenv("BASE_URL", "http://localhost:5000")
-    max_form_mb = os.getenv("MAX_FORM_MEMORY_MB", "").strip()
-    if max_form_mb:
-        try:
-            max_form_bytes = int(float(max_form_mb) * 1024 * 1024)
-        except ValueError:
-            app.logger.warning("MAX_FORM_MEMORY_MB is not a number; ignoring override.")
+    max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB")
+    max_form_bytes = None
+    if max_form_mb_raw is not None:
+        max_form_mb = max_form_mb_raw.strip()
+        if max_form_mb:
+            try:
+                parsed_mb = float(max_form_mb)
+                max_form_bytes = int(parsed_mb * 1024 * 1024)
+            except ValueError:
+                app.logger.warning("MAX_FORM_MEMORY_MB is not a number; ignoring override.")
+        else:
             max_form_bytes = 0
     else:
-        max_form_bytes = 50 * 1024 * 1024
+        max_form_bytes = 0
 
-    if max_form_bytes:
+    if max_form_bytes and max_form_bytes > 0:
         app.config["MAX_FORM_MEMORY_SIZE"] = max_form_bytes
         app.config["MAX_CONTENT_LENGTH"] = max_form_bytes
+    else:
+        app.config.pop("MAX_FORM_MEMORY_SIZE", None)
+        app.config.pop("MAX_CONTENT_LENGTH", None)
     admin_hash, used_default_password = ensure_admin_password()
     app.config["ADMIN_PASSWORD_HASH"] = admin_hash
-
-    os.makedirs(app.instance_path, exist_ok=True)
 
     @app.before_request
     def before_request() -> None:  # type: ignore[override]
@@ -85,7 +127,7 @@ def get_settings() -> dict[str, Any]:
     else:
         settings = {
             "site_name": "Grand River Analytics",
-            "site_description": "Independent equity research across global markets.",
+            "site_description": "Independent equity research across financials, technology, and consumer sectors.",
             "base_url": os.getenv("BASE_URL", "http://localhost:5000"),
         }
     g._settings = settings  # type: ignore[attr-defined]

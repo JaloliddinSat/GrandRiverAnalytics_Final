@@ -71,10 +71,10 @@ The tests instantiate the Flask app, hit key routes, and validate RSS/Sitemap re
 
 ## Deployment notes
 
-- SQLite is used by default for simplicity. To switch to another backend (e.g., MySQL), update `DATABASE` to point at your DSN and adjust the connection logic inside `utils/db.py` accordingly. When staying on SQLite in production, set `DATABASE_PATH` (or `DATABASE_URL`) to a location on persistent storage and optionally `REPORTS_CSV_PATH` to control where the automatic CSV export is written.
+- SQLite is used by default for simplicity. To switch to another backend (e.g., MySQL), update `DATABASE_URL` to point at your DSN and adjust the connection logic inside `utils/db.py` accordingly. When staying on SQLite in production, set `DATABASE_PATH` (or `DATABASE_URL`) to a location on persistent storage and optionally `REPORTS_CSV_PATH` to control where the automatic CSV export is written. If you do not set `SECRET_KEY`, the app now generates one and stores it alongside `DATABASE_PATH` (or in the instance folder) so multiple workers can validate sessions consistently.
 - Static assets live under `static/` and can be served by your front-end proxy/CDN.
 - For Replit, ensure the Run button executes `python app.py` (the default in this repo).
-- If you paste large inline images via TinyMCE, bump `MAX_FORM_MEMORY_MB` (defaults to 50 MB) to raise the payload allowance for form submissions.
+- If you paste large inline images via TinyMCE, set `MAX_FORM_MEMORY_MB` to the desired limit in MB (or leave it blank/`0` to remove the cap) to raise the payload allowance for form submissions.
 - TinyMCE loads from its CDN. Provide a `TINYMCE_API_KEY` (string or JSON web key) to use the official Tiny Cloud script, or leave it blank to fall back to the open-source jsDelivr mirror. You can also point to a fully self-hosted bundle with `TINYMCE_SCRIPT_URL`.
 - To enable the Adelle Sans Thin typography, supply either `ADOBE_FONTS_KIT_ID` (for your Typekit project ID) or a direct `ADOBE_FONTS_URL`. Leaving both blank falls back to the system font stack.
 - Replace placeholder logos and imagery under `static/img/` with brand-specific assets.
@@ -85,9 +85,9 @@ Render’s Python services provide the always-on environment needed for the admi
 
 1. Commit the included `render.yaml` blueprint (already present in this repository).
 2. Create a new **Blueprint** on Render pointing at the GitHub repository. Render will read `render.yaml` and provision a free web service.
-3. During setup, supply environment variables for `SECRET_KEY`, `ADMIN_PASSWORD`, and update `BASE_URL` to your Render domain (e.g., `https://grand-river-analytics.onrender.com`). Add `TINYMCE_API_KEY` (plain string or Tiny-provided JSON key) if you want to load the editor from Tiny Cloud, or set `TINYMCE_SCRIPT_URL` to a custom bundle.
+3. During setup, supply environment variables for `SECRET_KEY`, `ADMIN_PASSWORD`, and update `BASE_URL` to your Render domain (e.g., `https://grand-river-analytics.onrender.com`). Add `TINYMCE_API_KEY` (plain string or Tiny-provided JSON key) if you want to load the editor from Tiny Cloud, or set `TINYMCE_SCRIPT_URL` to a custom bundle. If you prefer the app to manage the key, leave `SECRET_KEY` blank and it will write a stable value next to `DATABASE_PATH` (for example `/var/data/secret_key.txt`).
 4. Deploy. Render runs `pip install -r requirements.txt` and launches the site via `gunicorn app:app` (matching the provided `Procfile`).
-5. Render provisions a persistent disk as defined in `render.yaml`. The service stores the SQLite file at `/var/data/grandriver.db` and mirrors every change into `/var/data/reports_backup.csv`. Adjust `DATABASE_PATH` and `REPORTS_CSV_PATH` if you mount a different location. Increase `MAX_FORM_MEMORY_MB` if you expect authors to paste very large inline charts so Render’s request parser accepts the payload.
+5. Render provisions a persistent disk as defined in `render.yaml`. The service stores the SQLite file at `/var/data/grandriver.db` and mirrors every change into `/var/data/reports_backup.csv`. Adjust `DATABASE_PATH` and `REPORTS_CSV_PATH` if you mount a different location. Increase `MAX_FORM_MEMORY_MB` (or leave it unset/`0` to remove the limit) if you expect authors to paste very large inline charts so Render’s request parser accepts the payload.
 
 ### Optional: Static export to Netlify
 
