@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<script src="{{ tinymce_script_url }}" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editorConfig = {
+            selector: '#content',
+            height: 600,
+            menubar: true,
+            branding: false,
+            promotion: false,
+            plugins:
+                'advlist anchor autolink charmap code fullscreen hr image link lists media paste preview quickbars table',
+            toolbar:
+                'undo redo | styles | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | blockquote hr | code fullscreen preview',
+            toolbar_mode: 'sliding',
+            toolbar_sticky: true,
+            quickbars_selection_toolbar: 'bold italic | blockquote quicklink quickimage',
+            image_caption: true,
+            image_advtab: true,
+            automatic_uploads: true,
+            file_picker_types: 'image media',
+            paste_data_images: true,
+            images_upload_handler: (blobInfo) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject('Image upload failed');
+                    reader.readAsDataURL(blobInfo.blob());
+                }),
+            skin: 'oxide',
+            content_css: 'default',
+            content_style:
+                'body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size:16px; line-height:1.6; color:#111; } figure.image { margin: 1.5rem auto; } img { max-width:100%; height:auto; }',
+        };
+        {% if tinymce_api_key %}
+        editorConfig.api_key = '{{ tinymce_api_key }}';
+        {% endif %}
+        tinymce.init(editorConfig);
+    });
+</script>
+{% endblock %}
+{% block body_class %}admin-shell{% endblock %}
+{% block content %}
+<section class="admin-hero">
+    <div class="container">
+        <div class="admin-hero__inner">
+            <div>
+                <p class="eyebrow">Editorial workspace</p>
+                <h1>{% if post %}Edit report{% else %}New report{% endif %}</h1>
+                <p class="muted">Enrich your research with inline charts, highlight pull quotes, and orchestrate publish timing.</p>
+            </div>
+            {% if post %}
+            <div class="hero-actions">
+                <a class="button ghost" href="{{ url_for('admin_preview', post_id=post.id) }}" target="_blank" rel="noopener">Open preview</a>
+                <a class="button" href="{{ url_for('post_detail', slug=post.slug) }}" target="_blank" rel="noopener">View live</a>
+            </div>
+            {% endif %}
+        </div>
+        <dl class="admin-metrics compact">
+            <div>
+                <dt>Status</dt>
+                <dd>{% if post and post.published %}Published{% else %}Draft{% endif %}</dd>
+            </div>
+            <div>
+                <dt>Last updated</dt>
+                <dd>{% if post %}{{ post.updated_at|format_date }}{% else %}—{% endif %}</dd>
+            </div>
+            <div>
+                <dt>Feature flag</dt>
+                <dd>{% if post and post.featured %}Enabled{% else %}Off{% endif %}</dd>
+            </div>
+        </dl>
+    </div>
+</section>
+<section class="section">
+    <div class="container">
+        <form method="post" class="admin-form admin-panel admin-editor">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-sections">
+                <div class="form-panel">
+                    <fieldset>
+                        <legend>Report basics</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <input type="text" id="title" name="title" value="{{ post.title if post else '' }}" required data-title-input />
+                        </div>
+                        <div class="form-group">
+                            <label for="slug">Slug</label>
+                            <input type="text" id="slug" name="slug" value="{{ post.slug if post and post.slug else '' }}" required data-slug-input />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="excerpt">Excerpt</label>
+                        <textarea id="excerpt" name="excerpt" rows="3" required>{{ post.excerpt if post else '' }}</textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cover_url">Cover image URL</label>
+                            <input type="url" id="cover_url" name="cover_url" value="{{ post.cover_url if post and post.cover_url else '' }}" placeholder="https://" />
+                            <p class="help-text">Shown on listing cards. Optional when charts live in the article body.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="publish_date">Publish date (ISO)</label>
+                            <input type="text" id="publish_date" name="publish_date" value="{{ post.publish_date if post and post.publish_date else '' }}" placeholder="2024-03-01T12:00:00Z" />
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="tags">Tags (comma separated)</label>
+                            <input type="text" id="tags" name="tags" value="{{ post.tags if post and post.tags else '' }}" placeholder="Large-Cap, Financials" />
+                        </div>
+                        <div class="form-group">
+                            <label for="hero_style">Hero theme</label>
+                            {% set theme = post.hero_style if post and post.hero_style else 'light' %}
+                            <select id="hero_style" name="hero_style">
+                                <option value="light" {% if theme == 'light' %}selected{% endif %}>Light</option>
+                                <option value="slate" {% if theme == 'slate' %}selected{% endif %}>Slate</option>
+                                <option value="midnight" {% if theme == 'midnight' %}selected{% endif %}>Midnight</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hero_kicker">Hero kicker</label>
+                        <input type="text" id="hero_kicker" name="hero_kicker" value="{{ post.hero_kicker if post and post.hero_kicker else '' }}" placeholder="Sector Focus" />
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Report body</legend>
+                    <div class="form-group">
+                        <label for="content">Content</label>
+                        <textarea id="content" name="content" rows="12">{{ post.content if post else '' }}</textarea>
+                        <p class="help-text">Use the “Image” button or paste screenshots to embed visuals precisely where they belong.</p>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Enhancements</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="highlight_quote">Highlight quote</label>
+                            <textarea id="highlight_quote" name="highlight_quote" rows="3" placeholder="Optional pull quote to emphasize.">{{ post.highlight_quote if post and post.highlight_quote else '' }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="summary_points">Summary bullets</label>
+                            <textarea id="summary_points" name="summary_points" rows="3" placeholder="One insight per line">{{ post.summary_points if post and post.summary_points else '' }}</textarea>
+                            <p class="help-text">Each line renders as a bullet near the top of the article.</p>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cta_label">Call-to-action label</label>
+                            <input type="text" id="cta_label" name="cta_label" value="{{ post.cta_label if post and post.cta_label else '' }}" placeholder="Download model" />
+                        </div>
+                        <div class="form-group">
+                            <label for="cta_url">Call-to-action URL</label>
+                            <input type="url" id="cta_url" name="cta_url" value="{{ post.cta_url if post and post.cta_url else '' }}" placeholder="https://" />
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <aside class="form-sidebar">
+                <fieldset>
+                    <legend>Publishing</legend>
+                    <div class="form-group">
+                        <label for="meta_title">Meta title</label>
+                        <input type="text" id="meta_title" name="meta_title" value="{{ post.meta_title if post and post.meta_title else '' }}" placeholder="Custom SEO title" />
+                        <p class="help-text">Overrides the document title for search engines.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="meta_description">Meta description</label>
+                        <textarea id="meta_description" name="meta_description" rows="3" placeholder="155 character summary">{{ post.meta_description if post and post.meta_description else '' }}</textarea>
+                    </div>
+                    <div class="form-group checkbox">
+                        <input type="checkbox" id="featured" name="featured" value="1" {% if post and post.featured %}checked{% endif %} />
+                        <label for="featured">Feature on home page</label>
+                    </div>
+                </fieldset>
+                <div class="sidebar-note">
+                    <h3>Authoring tips</h3>
+                    <ul>
+                        <li>Use <strong>Heading 2</strong>/<strong>Heading 3</strong> to build the table of contents automatically.</li>
+                        <li>The image tool accepts direct URLs or pasted screenshots; they are stored inline with the article.</li>
+                        <li>Save as draft to keep working without publishing.</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+        <div class="form-actions">
+            <button type="submit" name="action" value="draft" class="button secondary">Save draft</button>
+            <button type="submit" name="action" value="preview" class="button ghost">Save &amp; preview</button>
+            <button type="submit" name="action" value="publish" class="button">Publish</button>
+        </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
