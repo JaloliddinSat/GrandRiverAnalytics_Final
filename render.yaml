@@ -6,8 +6,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     autoDeploy: true
-    disks:
-      - name: data
+    disk:
+        name: data
         mountPath: /var/data
         sizeGB: 1
     envVars:

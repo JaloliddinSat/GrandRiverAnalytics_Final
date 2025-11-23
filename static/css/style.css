@@ -144,7 +144,7 @@ ul, ol {
 }
 
 .hero-text h1 {
-    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+    font-size: clamp(1.5rem, 0.5vw, 2.25rem);
     font-weight: 300;
 }
 
@@ -156,7 +156,7 @@ ul, ol {
 }
 
 .hero-image {
-    margin: 2rem auto 0;
+    margin: 0.75rem auto 5.0rem;
     max-width: min(56rem, 95vw);
     position: relative;
     border-radius: 0.75rem;
@@ -165,7 +165,7 @@ ul, ol {
 
 .hero-image img {
     width: 100%;
-    max-height: 360px;
+    max-height: auto;
     border-radius: 0.75rem;
     object-fit: cover;
     object-position: center;

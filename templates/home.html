@@ -6,10 +6,10 @@
 {% if website_json %}<script type="application/ld+json">{{ website_json|tojson }}</script>{% endif %}
 {% endblock %}
 {% block content %}
-{% set hero_image = url_for('static', filename='img/home-hero-waterloo.svg') %}
+{% set hero_image = url_for('static', filename='img/waterloo.png') %}
 {% set hero_fallback = hero_image %}
-{% set about_image = url_for('static', filename='img/home-laurier.svg') %}
-{% set about_fallback = about_image %}
+{% set about_image = url_for('static', filename='img/laurier.png') %}
+{% set about_fallback = hero_image %}
 <section class="hero">
     <div class="container narrow hero-text">
         <h1>Using rigorous qualitative techniques to produce research equity reports. The ultimate objective is to enable individuals to view professional analysis done by students of Waterloo and Laurier.</h1>
@@ -70,7 +70,7 @@
 </section>
 <section class="section cta-section">
     <div class="container narrow center">
-        <p>We currently have two members—seen on the Team page—focused on keeping the biweekly deadline of reports.</p>
+        <p>We currently have three members—seen on the Team page—focused on keeping the biweekly deadline of reports.</p>
         <a class="button" href="{{ url_for('team') }}">Team Page</a>
     </div>
 </section>
