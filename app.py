@@ -90,12 +90,13 @@ def create_app() -> Flask:
     else:
         max_form_bytes = 0
 
+    # Always set these keys so request.max_content_length has a safe default.
     if max_form_bytes and max_form_bytes > 0:
         app.config["MAX_FORM_MEMORY_SIZE"] = max_form_bytes
         app.config["MAX_CONTENT_LENGTH"] = max_form_bytes
     else:
-        app.config.pop("MAX_FORM_MEMORY_SIZE", None)
-        app.config.pop("MAX_CONTENT_LENGTH", None)
+        app.config["MAX_FORM_MEMORY_SIZE"] = None
+        app.config["MAX_CONTENT_LENGTH"] = None
     admin_hash, used_default_password = ensure_admin_password()
     app.config["ADMIN_PASSWORD_HASH"] = admin_hash
 
