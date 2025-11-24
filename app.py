@@ -75,7 +75,7 @@ def create_app() -> Flask:
 
     app.config["SECRET_KEY"] = _load_or_create_secret_key(app.instance_path)
     app.config["BASE_URL"] = os.getenv("BASE_URL", "http://localhost:5000")
-    max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB")
+    max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB", "64")
     max_form_bytes = None
     if max_form_mb_raw is not None:
         max_form_mb = max_form_mb_raw.strip()
