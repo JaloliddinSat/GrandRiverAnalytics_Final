@@ -103,7 +103,7 @@ If you still need a static snapshot (for example, as a CDN edge cache), the proj
 
 ### Deploying on Fly.io
 
-Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io. The Fly config is written for Machines (`http_service` block) so the dashboard and `fly deploy` can prepare a launch plan without needing to generate an external manifest.
+Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io. The Fly config is written for Machines (`http_service` block) and also includes the legacy `services` stanza so the dashboard, the web “Deploy to Fly” button, and `fly deploy` can prepare a launch plan without needing an external manifest.
 
 1. Install the Fly CLI and run `fly auth login`.
 2. Update the `app` value in `fly.toml` to match your Fly application name and adjust `primary_region` if needed.

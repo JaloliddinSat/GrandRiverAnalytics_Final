@@ -19,6 +19,26 @@ primary_region = "ord"
     soft_limit = 20
     hard_limit = 25
 
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 20
+    hard_limit = 25
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
+
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
