@@ -1,0 +1,38 @@
+app = "grand-river-analytics"
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  DATABASE_PATH = "/data/grandriver.db"
+  REPORTS_CSV_PATH = "/data/reports_backup.csv"
+
+# Standard Nomad-style services configuration compatible with Fly Launch,
+# the dashboard "Deploy" button, and `fly deploy` without needing any
+# temporary manifest generation.
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 20
+    hard_limit = 25
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
+
+[[mounts]]
+  source = "data"
+  destination = "/data"
+  processes = ["app"]

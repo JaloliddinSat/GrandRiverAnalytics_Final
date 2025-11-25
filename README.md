@@ -101,6 +101,22 @@ If you still need a static snapshot (for example, as a CDN edge cache), the proj
 
 > **Note:** Static exports are read-only and redirect `/admin` to an informational notice. Use Render (or another Python host) when you need to author or edit content.
 
+### Deploying on Fly.io
+
+Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io. The config is the standard Nomad-style `[[services]]` layout that the dashboard, the web “Deploy to Fly” button, and `fly deploy` all expect, so Fly can prepare the deployment plan without trying to generate a temporary manifest file. A `[[mounts]]` block attaches a `data` volume at `/data` so the SQLite database and CSV backup live on persistent storage.
+
+1. Install the Fly CLI and run `fly auth login`.
+2. Update the `app` value in `fly.toml` to match your Fly application name and adjust `primary_region` if needed.
+3. Provision the volume once (for example `fly volumes create data --size 1 --region ord`) so `/data` persists between deploys.
+4. Set the required secrets (for example `SECRET_KEY`, `ADMIN_PASSWORD`, and `BASE_URL`) with `fly secrets set`.
+5. Deploy from the repository root:
+
+   ```bash
+   fly deploy
+   ```
+
+The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080`. The `fly.toml` `[[services]]` block proxies ports 80/443 to the internal port 8080 and is compatible with Fly Launch planners so no manifest is required. `DATABASE_PATH` and `REPORTS_CSV_PATH` default to `/data` inside Fly, and the app auto-detects the `/data` defaults when `FLY_APP_NAME` is present.
+
 ## Project structure
 
 ```
