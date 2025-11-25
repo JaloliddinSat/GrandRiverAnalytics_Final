@@ -31,8 +31,3 @@ primary_region = "ord"
     interval = "15s"
     restart_limit = 0
     timeout = "2s"
-
-[[mounts]]
-  source = "data"
-  destination = "/data"
-  processes = ["app"]
