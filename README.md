@@ -101,6 +101,21 @@ If you still need a static snapshot (for example, as a CDN edge cache), the proj
 
 > **Note:** Static exports are read-only and redirect `/admin` to an informational notice. Use Render (or another Python host) when you need to author or edit content.
 
+### Deploying on Fly.io
+
+Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io.
+
+1. Install the Fly CLI and run `fly auth login`.
+2. Update the `app` value in `fly.toml` to match your Fly application name and adjust `primary_region` if needed.
+3. Set the required secrets (for example `SECRET_KEY`, `ADMIN_PASSWORD`, and `BASE_URL`) with `fly secrets set`.
+4. Deploy from the repository root:
+
+   ```bash
+   fly deploy
+   ```
+
+The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080` (matching the `fly.toml` service configuration).
+
 ## Project structure
 
 ```
