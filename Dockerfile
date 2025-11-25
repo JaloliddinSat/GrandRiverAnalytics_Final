@@ -6,9 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update \ 
-    && apt-get install -y --no-install-recommends build-essential \ 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Ensure the default data directory exists even when a Fly volume is not attached.
+RUN mkdir -p /data
 
 COPY requirements.txt ./
 RUN pip install --no-deps -r requirements.txt
