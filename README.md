@@ -114,6 +114,7 @@ Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io
    fly deploy
    ```
 
+The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080`. The `fly.toml` services block exposes ports 80/443 for HTTP/HTTPS and proxies them to port `8080` inside the container, matching the `PORT` environment variable.
 The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080` (matching the `fly.toml` service configuration).
 
 ## Project structure
