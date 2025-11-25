@@ -22,6 +22,11 @@ def _database_path() -> Path:
         if candidate:
             return Path(candidate)
 
+    # When running on Fly.io without explicit overrides, prefer the
+    # attached volume at /data for persistence between deploys.
+    if os.getenv("FLY_APP_NAME"):
+        return Path("/data/grandriver.db")
+
     database_name = os.getenv("DATABASE", "grandriver.db")
     return Path(database_name)
 
@@ -36,6 +41,9 @@ def _backup_csv_path() -> Path:
         return Path(override)
     if legacy_override:
         return Path(legacy_override)
+
+    if os.getenv("FLY_APP_NAME"):
+        return Path("/data/reports_backup.csv")
 
     return Path("reports_backup.csv")
 
