@@ -103,7 +103,7 @@ If you still need a static snapshot (for example, as a CDN edge cache), the proj
 
 ### Deploying on Fly.io
 
-Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io.
+Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io. The Fly config is written for Machines (`http_service` block) so the dashboard and `fly deploy` can prepare a launch plan without needing to generate an external manifest.
 
 1. Install the Fly CLI and run `fly auth login`.
 2. Update the `app` value in `fly.toml` to match your Fly application name and adjust `primary_region` if needed.
@@ -114,8 +114,7 @@ Use the provided `Dockerfile` and `fly.toml` to deploy the dynamic app to Fly.io
    fly deploy
    ```
 
-The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080`. The `fly.toml` services block exposes ports 80/443 for HTTP/HTTPS and proxies them to port `8080` inside the container, matching the `PORT` environment variable.
-The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080` (matching the `fly.toml` service configuration).
+The Dockerfile builds a lightweight Python 3.11 image, installs `requirements.txt`, and starts the site with `gunicorn` bound to port `8080`. The `fly.toml` `http_service` block proxies ports 80/443 to the internal port 8080, sets HTTPS redirection, and configures Machines auto-start/auto-stop so Fly can generate the deployment plan without a temporary manifest file.
 
 ## Project structure
 
