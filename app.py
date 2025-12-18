@@ -31,7 +31,16 @@ from utils.auth import (
     login_required,
     verify_password,
 )
-from utils.db import backup_posts_to_csv, close_db, execute, init_db, query_all, query_one
+from utils.db import (
+    backup_posts_to_csv,
+    close_db,
+    execute,
+    init_db,
+    query_all,
+    query_one,
+)
+from utils.emailer import send_contact_email
+
 
 load_dotenv()
 
@@ -423,18 +432,13 @@ def register_routes(app: Flask) -> None:
             website_json=website_json,
             team_members=team_members,
         )
-
-    from flask import request, render_template, flash
-    from utils.db import execute
-    from utils.emailer import send_contact_email
-    
     
     @app.route("/contact", methods=["GET", "POST"])
     def contact() -> str:
         success = False
     
         # whatever you already have to build these
-        meta = get_meta("Contact")
+        meta = seo.get_meta("Contact")
         breadcrumbs = [("Home", "/"), ("Contact", None)]
         website_json = build_website_json()
     
