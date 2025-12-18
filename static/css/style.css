@@ -164,7 +164,7 @@ ul, ol {
 .hero-actions--split {
     justify-content: flex-start;
     margin-top: 2.5rem;   /* space between text and buttons */
-    gap: 1.25rem;        /* space BETWEEN buttons */
+    gap: 5rem;        /* space BETWEEN buttons */
     flex-wrap: wrap;
 }
 
