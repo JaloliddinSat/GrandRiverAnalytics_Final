@@ -116,6 +116,18 @@ def init_db() -> None:
                 featured INTEGER NOT NULL DEFAULT 0
             )
             """
+                cursor.execute("""
+                CREATE TABLE IF NOT EXISTS contact_messages (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  email TEXT NOT NULL,
+                  message TEXT NOT NULL,
+                  created_at TEXT NOT NULL,
+                  ip TEXT,
+                  user_agent TEXT
+                )
+                """)
+                db.commit()  
         )
         ensure_post_columns(db)
         cursor.execute(
