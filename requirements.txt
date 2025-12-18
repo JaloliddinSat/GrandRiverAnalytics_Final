@@ -7,3 +7,4 @@ blinker==1.8.2
 MarkupSafe==2.1.5
 python-dotenv==1.0.1
 gunicorn==21.2.0
+requests
