@@ -452,11 +452,9 @@ def register_routes(app: Flask) -> None:
             [("Home", "/"), ("Contact", "/contact")],
         )
     
-        website_json = build_website_json()
+        website_json = seo.jsonld_website_search(settings["base_url"])
     
         if request.method == "POST":
-            csrf_protect()
-    
             name = request.form.get("name", "").strip()
             email = request.form.get("email", "").strip()
             message = request.form.get("message", "").strip()
@@ -464,7 +462,7 @@ def register_routes(app: Flask) -> None:
             if not name or not email or not message:
                 flash("Please fill out all required fields.", "error")
             else:
-                # store in DB first (never lose message)
+                # store in DB first (never lose the message)
                 execute(
                     """
                     INSERT INTO contact_messages (name, email, message, created_at, ip, user_agent)
@@ -480,7 +478,7 @@ def register_routes(app: Flask) -> None:
                     ),
                 )
     
-                # email notification (failure does NOT block success)
+                # email notification (never block success)
                 try:
                     send_contact_email(name, email, message)
                 except Exception:
@@ -493,10 +491,8 @@ def register_routes(app: Flask) -> None:
             meta=meta,
             breadcrumbs=breadcrumbs,
             website_json=website_json,
-            csrf_token=generate_csrf_token(),
             success=success,
         )
-
 
     @app.route("/admin-unavailable/")
     def admin_unavailable() -> str:
