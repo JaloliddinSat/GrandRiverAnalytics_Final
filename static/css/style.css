@@ -151,7 +151,7 @@ ul, ol {
     letter-spacing: -0.02em;
     line-height: 1.05;
     margin: 0 0 1.25rem;
-    font-size: clamp(2.4rem, 3.6vw, 4.2rem);
+    font-size: clamp(2.1rem, 3vw, 3.6rem);
 }
 
 .hero-subtitle {
@@ -162,10 +162,12 @@ ul, ol {
 }
 
 .hero-actions--split {
-    justify-content: flex-start; /* overrides .hero-actions centered layout */
-    margin-top: 2rem;
+    justify-content: flex-start;
+    margin-top: 2.5rem;   /* space between text and buttons */
+    gap: 1.25rem;        /* space BETWEEN buttons */
     flex-wrap: wrap;
 }
+
 
 .hero-image--right {
     margin: 0;
