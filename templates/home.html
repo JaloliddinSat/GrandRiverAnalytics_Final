@@ -10,20 +10,33 @@
 {% set hero_fallback = hero_image %}
 {% set about_image = url_for('static', filename='img/laurier.png') %}
 {% set about_fallback = hero_image %}
-<section class="hero">
-    <div class="container narrow hero-text">
-        <h1>Using rigorous qualitative techniques to produce research equity reports. The ultimate objective is to enable individuals to view professional analysis done by students of Waterloo and Laurier.</h1>
-        <div class="hero-actions">
-            <a class="button primary" href="{{ url_for('blog_index') }}">Learn More</a>
-        </div>
+<section class="hero hero--split">
+  <div class="container hero-split">
+    <div class="hero-copy">
+      <h1 class="hero-title">Independent Equity<br>Research by Student Analysts</h1>
+
+      <p class="hero-subtitle">
+        We publish data-driven valuation and investment research focused on public companies,
+        built by students from the University of Waterloo and Laurier.
+      </p>
+
+      <div class="hero-actions hero-actions--split">
+        <a class="button primary" href="{{ url_for('blog_index') }}">View Research Reports</a>
+        <a class="button secondary" href="{{ url_for('home') }}#about">About Grand River Analytics</a>
+      </div>
     </div>
-    <div class="container">
-        <div class="hero-image" data-fallback-container data-placeholder-label="University of Waterloo main entrance">
-            <span class="media-fallback" aria-hidden="true">UW</span>
-            <img src="{{ hero_image }}" alt="University of Waterloo main entrance" loading="lazy" data-fallback-image data-default-cover="{{ hero_fallback }}" />
-        </div>
+
+    <div class="hero-image hero-image--right" data-fallback-container data-placeholder-label="Students collaborating on equity research">
+      <span class="media-fallback" aria-hidden="true">GRA</span>
+      <img src="{{ url_for('static', filename='img/waterloo.png') }}"
+           alt="Students collaborating on equity research"
+           loading="lazy"
+           data-fallback-image
+           data-default-cover="{{ url_for('static', filename='img/waterloo.png') }}" />
     </div>
+  </div>
 </section>
+
 <section class="section latest-section">
     <div class="container">
         <div class="section-header">
