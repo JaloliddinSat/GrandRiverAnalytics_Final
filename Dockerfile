@@ -14,7 +14,7 @@ RUN apt-get update \
 RUN mkdir -p /data
 
 COPY requirements.txt ./
-RUN pip install --no-deps -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . .
 
