@@ -15,14 +15,14 @@
 
 body {
     margin: 0;
-    font-family: "adelle-sans", "Adelle Sans", "Adelle Sans Thin", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-        sans-serif;
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: var(--text);
     background: var(--background);
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     font-weight: 300;
 }
+
 
 a {
     color: inherit;
@@ -131,48 +131,60 @@ ul, ol {
 }
 
 .hero {
-    padding-top: 3.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+    padding: 4.5rem 0 3.5rem;
+}
+
+.hero--split .hero-split {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 3rem;
     align-items: center;
 }
 
-.hero-text {
-    text-align: center;
-    padding-bottom: 2rem;
+.hero-copy {
+    text-align: left;
 }
 
-.hero-text h1 {
-    font-size: clamp(1.5rem, 0.5vw, 2.25rem);
-    font-weight: 300;
+.hero-title {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 0 0 1.25rem;
+    font-size: clamp(2.4rem, 3.6vw, 4.2rem);
 }
 
-.hero-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 42ch;
+    margin: 0;
 }
 
-.hero-image {
-    margin: 0.75rem auto 5.0rem;
-    max-width: min(56rem, 95vw);
+.hero-actions--split {
+    justify-content: flex-start; /* overrides .hero-actions centered layout */
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.hero-image--right {
+    margin: 0;
+    max-width: none;
     position: relative;
-    border-radius: 0.75rem;
+    border-radius: 0.9rem;
     overflow: hidden;
-}
-
-.hero-image img {
-    width: 100%;
-    max-height: auto;
-    border-radius: 0.75rem;
-    object-fit: cover;
-    object-position: center;
     box-shadow: 0 18px 45px rgba(17, 17, 17, 0.12);
 }
 
-.hero-image .media-fallback {
+.hero-image--right img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.hero-image--right .media-fallback {
     position: absolute;
     inset: 0;
     display: flex;
@@ -180,6 +192,35 @@ ul, ol {
     justify-content: center;
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 400;
+}
+
+.button.primary {
+    background: #2f5d8c;
+    border-color: #2f5d8c;
+    color: #fff;
+}
+
+.button.primary:hover {
+    background: #244a70;
+    border-color: #244a70;
+    color: #fff;
+}
+
+.button.secondary {
+    border-color: #b7c3d0;
+    color: #2f5d8c;
+}
+
+.button.secondary:hover {
+    background: rgba(47, 93, 140, 0.08);
+    color: #2f5d8c;
+    border-color: #9fb2c6;
+}
+
+@media (max-width: 900px) {
+    .hero--split .hero-split {
+        grid-template-columns: 1fr;
+    }
 }
 
 .about-section {
