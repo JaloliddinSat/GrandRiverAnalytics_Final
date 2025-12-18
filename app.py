@@ -437,12 +437,26 @@ def register_routes(app: Flask) -> None:
     def contact() -> str:
         success = False
     
-        # whatever you already have to build these
-        meta = seo.get_meta("Contact")
-        breadcrumbs = [("Home", "/"), ("Contact", None)]
+        settings = get_settings()
+        canonical = f"{settings['base_url'].rstrip('/')}/contact"
+    
+        meta = seo.build_meta(
+            title=f"Contact · {settings['site_name']}",
+            description="Get in touch with Grand River Analytics.",
+            canonical=canonical,
+            image_url=None,
+        )
+    
+        breadcrumbs = seo.jsonld_breadcrumbs(
+            settings["base_url"],
+            [("Home", "/"), ("Contact", "/contact")],
+        )
+    
         website_json = build_website_json()
     
         if request.method == "POST":
+            csrf_protect()
+    
             name = request.form.get("name", "").strip()
             email = request.form.get("email", "").strip()
             message = request.form.get("message", "").strip()
@@ -450,11 +464,10 @@ def register_routes(app: Flask) -> None:
             if not name or not email or not message:
                 flash("Please fill out all required fields.", "error")
             else:
-                # 1️⃣ store in DB (Fly volume)
+                # store in DB first (never lose message)
                 execute(
                     """
-                    INSERT INTO contact_messages
-                    (name, email, message, created_at, ip, user_agent)
+                    INSERT INTO contact_messages (name, email, message, created_at, ip, user_agent)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     (
@@ -467,13 +480,12 @@ def register_routes(app: Flask) -> None:
                     ),
                 )
     
-                # 2️⃣ email notification
+                # email notification (failure does NOT block success)
                 try:
                     send_contact_email(name, email, message)
-                except Exception as e:
-                    app.logger.warning("Contact email failed: %s", e)
+                except Exception:
+                    pass
     
-                flash("Thanks for reaching out. We'll be in touch soon.", "success")
                 success = True
     
         return render_template(
@@ -481,6 +493,7 @@ def register_routes(app: Flask) -> None:
             meta=meta,
             breadcrumbs=breadcrumbs,
             website_json=website_json,
+            csrf_token=generate_csrf_token(),
             success=success,
         )
 
