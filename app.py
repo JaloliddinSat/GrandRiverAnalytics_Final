@@ -424,32 +424,54 @@ def register_routes(app: Flask) -> None:
             team_members=team_members,
         )
 
+    from flask import request, render_template, flash
+    from utils.db import execute
+    from utils.emailer import send_contact_email
+    
+    
     @app.route("/contact", methods=["GET", "POST"])
     def contact() -> str:
-        settings = get_settings()
-        canonical = f"{settings['base_url']}/contact"
-        meta = seo.build_meta(
-            title=f"Contact · {settings['site_name']}",
-            description="Connect with the Grand River Analytics team for research access and inquiries.",
-            canonical=canonical,
-        )
-        breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Contact", "/contact")])
-        website_json = seo.jsonld_website_search(settings["base_url"])
         success = False
+    
+        # whatever you already have to build these
+        meta = get_meta("Contact")
+        breadcrumbs = [("Home", "/"), ("Contact", None)]
+        website_json = build_website_json()
+    
         if request.method == "POST":
             name = request.form.get("name", "").strip()
             email = request.form.get("email", "").strip()
             message = request.form.get("message", "").strip()
-            honeypot = request.form.get("website", "").strip()
-            if honeypot:
-                abort(400)
+    
             if not name or not email or not message:
-                flash("All fields are required.", "error")
+                flash("Please fill out all required fields.", "error")
             else:
-                app.logger.info("Contact form submitted by %s <%s>\n%s", name, email, message)
-                # TODO: integrate SMTP provider for outbound email delivery.
+                # 1️⃣ store in DB (Fly volume)
+                execute(
+                    """
+                    INSERT INTO contact_messages
+                    (name, email, message, created_at, ip, user_agent)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        name,
+                        email,
+                        message,
+                        datetime.utcnow().isoformat(),
+                        request.headers.get("Fly-Client-IP") or request.remote_addr,
+                        request.headers.get("User-Agent", ""),
+                    ),
+                )
+    
+                # 2️⃣ email notification
+                try:
+                    send_contact_email(name, email, message)
+                except Exception as e:
+                    app.logger.warning("Contact email failed: %s", e)
+    
                 flash("Thanks for reaching out. We'll be in touch soon.", "success")
                 success = True
+    
         return render_template(
             "contact.html",
             meta=meta,
@@ -457,6 +479,7 @@ def register_routes(app: Flask) -> None:
             website_json=website_json,
             success=success,
         )
+
 
     @app.route("/admin-unavailable/")
     def admin_unavailable() -> str:
