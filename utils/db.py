@@ -91,65 +91,69 @@ def execute(query: str, params: Iterable[Any] | None = None) -> int:
 def init_db() -> None:
     db = get_db()
     with closing(db.cursor()) as cursor:
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS posts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                slug TEXT NOT NULL UNIQUE,
-                excerpt TEXT NOT NULL,
-                content TEXT NOT NULL,
-                cover_url TEXT,
-                tags TEXT,
-                published INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                publish_date TEXT,
-                meta_title TEXT,
-                meta_description TEXT,
-                hero_kicker TEXT,
-                hero_style TEXT,
-                highlight_quote TEXT,
-                summary_points TEXT,
-                cta_label TEXT,
-                cta_url TEXT,
-                featured INTEGER NOT NULL DEFAULT 0
-            )
-            """
-                cursor.execute("""
-                CREATE TABLE IF NOT EXISTS contact_messages (
-                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  name TEXT NOT NULL,
-                  email TEXT NOT NULL,
-                  message TEXT NOT NULL,
-                  created_at TEXT NOT NULL,
-                  ip TEXT,
-                  user_agent TEXT
-                )
-                """)
-                db.commit()  
+        # posts
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            excerpt TEXT NOT NULL,
+            content TEXT NOT NULL,
+            cover_url TEXT,
+            tags TEXT,
+            published INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            publish_date TEXT,
+            meta_title TEXT,
+            meta_description TEXT,
+            hero_kicker TEXT,
+            hero_style TEXT,
+            highlight_quote TEXT,
+            summary_points TEXT,
+            cta_label TEXT,
+            cta_url TEXT,
+            featured INTEGER NOT NULL DEFAULT 0
         )
+        """)
+
+        # contact messages  ✅ separate execute
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            ip TEXT,
+            user_agent TEXT
+        )
+        """)
+
+        db.commit()
+
         ensure_post_columns(db)
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS settings (
-                id INTEGER PRIMARY KEY CHECK (id = 1),
-                site_name TEXT NOT NULL,
-                site_description TEXT NOT NULL,
-                base_url TEXT NOT NULL
-            )
-            """
+
+        # settings
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            site_name TEXT NOT NULL,
+            site_description TEXT NOT NULL,
+            base_url TEXT NOT NULL
         )
-        cursor.execute(
-            """
-            INSERT OR IGNORE INTO settings (id, site_name, site_description, base_url)
-            VALUES (1, 'Grand River Analytics', 'Independent equity research across financials, technology, and consumer sectors.', 'https://example.com')
-            """
-        )
+        """)
+
+        cursor.execute("""
+        INSERT OR IGNORE INTO settings (id, site_name, site_description, base_url)
+        VALUES (1, 'Grand River Analytics',
+                'Independent equity research across financials, technology, and consumer sectors.',
+                'https://example.com')
+        """)
+
         db.commit()
 
     seed_posts()
-
 
 def ensure_post_columns(db: sqlite3.Connection) -> None:
     desired_columns = {
