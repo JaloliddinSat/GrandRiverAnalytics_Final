@@ -70,21 +70,66 @@
         </div>
     </div>
 </section>
-<section id="about" class="section about-section">
-    <div class="container narrow">
-        <h2>About Us</h2>
-        <p><strong>Grand River Analytics</strong> is a student-run financial publishing website, focused on showcasing qualitative techniques through equity reports. The goal is to provide an outlet to clearly display our technical analysis skills to future employers or those similarly interested in the topic.</p>
-        <p>The name <strong>Grand River Analytics</strong> originates from the Grand River, a river which flows through both the universities of Waterloo and Laurier, the place of study for both members of the team.</p>
+<section id="about" class="section about-section about-v2">
+  <div class="container about-v2__container">
+    <div class="about-v2__grid">
+      <div class="about-v2__copy">
+        <h2 class="about-v2__title">About Us</h2>
+
+        <p class="about-v2__lede">
+          <strong>Grand River Analytics</strong> is a student-run financial publishing website focused on showcasing qualitative
+          techniques through equity reports. We aim to present clear, defensible analysis that’s easy to audit.
+        </p>
+
+        <p class="about-v2__body">
+          The name <strong>Grand River Analytics</strong> comes from the Grand River — a river that flows through both
+          the universities of Waterloo and Laurier, where members of our team study.
+        </p>
+
+        <div class="about-v2__actions">
+          <a class="button primary" href="{{ url_for('blog_index') }}">View Reports</a>
+          <a class="button" href="{{ url_for('team') }}">Meet the Team</a>
+        </div>
+      </div>
+
+      <aside class="about-v2__cards" aria-label="Highlights">
+        <div class="about-v2__card">
+          <div class="about-v2__card-title">Biweekly</div>
+          <div class="about-v2__card-subtitle">Publishing cadence</div>
+        </div>
+
+        <div class="about-v2__card">
+          <div class="about-v2__card-title">Waterloo + Laurier</div>
+          <div class="about-v2__card-subtitle">Student analysts</div>
+        </div>
+
+        <div class="about-v2__card">
+          <div class="about-v2__card-title">Public Equities</div>
+          <div class="about-v2__card-subtitle">Coverage focus</div>
+        </div>
+      </aside>
     </div>
-    <div class="feature-image" data-fallback-container data-placeholder-label="Wilfrid Laurier University stadium">
-        <span class="media-fallback" aria-hidden="true">WLU</span>
-        <img src="{{ about_image }}" alt="Wilfrid Laurier University stadium" loading="lazy" data-fallback-image data-default-cover="{{ about_fallback }}" />
+
+    <div class="about-v2__image feature-image"
+         data-fallback-container
+         data-placeholder-label="Wilfrid Laurier University stadium">
+      <span class="media-fallback" aria-hidden="true">WLU</span>
+      <img
+        src="{{ about_image }}"
+        alt="Wilfrid Laurier University stadium"
+        loading="lazy"
+        data-fallback-image
+        data-default-cover="{{ about_fallback }}"
+      />
     </div>
+
+    <div class="about-v2__footer center">
+      <p class="about-v2__footer-text">
+        We currently have three members—seen on the Team page—focused on keeping the biweekly deadline of reports.
+      </p>
+      <a class="button" href="{{ url_for('team') }}">Team Page</a>
+    </div>
+  </div>
 </section>
-<section class="section cta-section">
-    <div class="container narrow center">
-        <p>We currently have three members—seen on the Team page—focused on keeping the biweekly deadline of reports.</p>
-        <a class="button" href="{{ url_for('team') }}">Team Page</a>
-    </div>
-</section>
+
 {% endblock %}
