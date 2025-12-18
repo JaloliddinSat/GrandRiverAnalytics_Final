@@ -162,12 +162,12 @@ ul, ol {
 }
 
 .hero-actions--split {
-    justify-content: flex-start;
-    margin-top: 2.5rem;   /* space between text and buttons */
-    gap: 5rem;        /* space BETWEEN buttons */
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2.5rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
-
 
 .hero-image--right {
     margin: 0;
