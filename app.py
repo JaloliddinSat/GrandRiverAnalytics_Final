@@ -558,7 +558,7 @@ def register_routes(app: Flask) -> None:
         settings = get_settings()
         urls = [
             {"loc": settings["base_url"] + path, "lastmod": datetime.utcnow().date().isoformat()}
-            for path in ["/", "/team", "/contact", "/blog"]
+            for path in ["/", "/team", "/contact", "/reports"]
         ]
         for post in query_all("SELECT slug, updated_at FROM posts WHERE published = 1"):
             urls.append(
