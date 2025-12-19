@@ -363,7 +363,7 @@ def register_routes(app: Flask) -> None:
         )
         breadcrumbs = seo.jsonld_breadcrumbs(
             settings["base_url"],
-            [("Home", "/"), ("Blog", "/blog"), (post["title"], f"/post/{post['slug']}")],
+            [("Home", "/"), ("Reports", "/reports"), (post["title"], f"/post/{post['slug']}")],
         )
         website_json = seo.jsonld_website_search(settings["base_url"])
         blog_json = seo.jsonld_blogposting(settings["base_url"], post, settings["site_name"], settings["site_description"])
