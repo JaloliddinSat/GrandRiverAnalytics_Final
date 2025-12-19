@@ -1204,9 +1204,22 @@ select:focus {
 
 /* Admin shell theming */
 body.admin-shell {
-    background: radial-gradient(circle at top, rgba(138, 202, 255, 0.12), transparent 55%), #050b1a;
-    color: #e5f0ff;
+    /* Admin theme variables */
+    --background: #050b1a;
+    --text: #ffffff;          /* PURE WHITE */
+    --muted: #cbd5e1;
+    --border: rgba(255, 255, 255, 0.18);
+
+    background: radial-gradient(
+        circle at top,
+        rgba(138, 202, 255, 0.12),
+        transparent 55%
+    ),
+    var(--background);
+
+    color: var(--text);
 }
+
 
 .admin-shell .site-header {
     background: rgba(8, 12, 26, 0.82);
