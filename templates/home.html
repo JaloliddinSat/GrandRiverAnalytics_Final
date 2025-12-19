@@ -21,7 +21,7 @@
       </p>
 
       <div class="hero-actions hero-actions--split">
-        <a class="button primary" href="{{ url_for('blog_index') }}">View Research Reports</a>
+        <a class="button primary" href="{{ url_for('reports_index') }}">View Research Reports</a>
         <a class="button secondary" href="{{ url_for('home') }}#about">About Grand River Analytics</a>
       </div>
     </div>
@@ -41,7 +41,7 @@
     <div class="container">
         <div class="section-header">
             <h2>Latest Research</h2>
-            <a class="text-link" href="{{ url_for('blog_index') }}">Browse all reports →</a>
+            <a class="text-link" href="{{ url_for('reports_index') }}">Browse all reports →</a>
         </div>
         <div class="featured-grid">
             {% set placeholder_cover = url_for('static', filename='img/blog-placeholder.svg') %}
@@ -87,7 +87,7 @@
         </p>
 
         <div class="about-v2__actions">
-          <a class="button primary" href="{{ url_for('blog_index') }}">View Reports</a>
+          <a class="button primary" href="{{ url_for('report_index') }}">View Reports</a>
           <a class="button" href="{{ url_for('team') }}">Meet the Team</a>
         </div>
       </div>
