@@ -311,11 +311,11 @@ def register_routes(app: Flask) -> None:
         total = total_row["count"] if total_row else 0
         total_pages = max(1, math.ceil(total / per_page))
         settings = get_settings()
-        canonical = f"{settings['base_url']}/blog"
+        canonical = f"{settings['base_url']}/reports"
         if page > 1:
             canonical += f"?page={page}"
         meta = seo.build_meta(
-            title=f"Blog · {settings['site_name']}",
+            title=f"Reports · {settings['site_name']}",
             description="Stock write-ups and sector notes from Grand River Analytics.",
             canonical=canonical,
         )
@@ -325,10 +325,10 @@ def register_routes(app: Flask) -> None:
                 tag = tag.strip()
                 if tag:
                     all_tags.add(tag)
-        breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Blog", "/blog")])
+        breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Reports", "/reports")])
         website_json = seo.jsonld_website_search(settings["base_url"])
-        prev_url = url_for("blog_index", page=page - 1) if page > 1 else None
-        next_url = url_for("blog_index", page=page + 1) if page < total_pages else None
+        prev_url = url_for("reports_index", page=page - 1) if page > 1 else None
+        next_url = url_for("reports_index", page=page + 1) if page < total_pages else None
         return render_template(
             "blog_index.html",
             posts=posts,
