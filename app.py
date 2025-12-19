@@ -285,8 +285,8 @@ def register_routes(app: Flask) -> None:
             website_json=website_json,
         )
 
-    @app.route("/blog")
-    def blog_index() -> str:
+    @app.route("/reports")
+    def reports_index() -> str:
         page = max(1, int(request.args.get("page", 1)))
         per_page = 10
         offset = (page - 1) * per_page
