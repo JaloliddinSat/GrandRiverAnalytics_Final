@@ -49,7 +49,7 @@
                 <ul class="nav-list">
                     <li><a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a></li>
                     <li><a href="{{ url_for('home') }}#about">About Us</a></li>
-                    <li><a href="{{ url_for('reports_index') }}" {% if request.endpoint in ['reports_index', 'report_detail'] %}aria-current="page"{% endif %}>Reports</a></li>
+                    <li><a href="{{ url_for('reports_index') }}" {% if request.endpoint in ['reports_index', 'post_detail'] %}aria-current="page"{% endif %}>Reports</a></li>
                     <li><a href="{{ url_for('team') }}" {% if request.endpoint == 'team' %}aria-current="page"{% endif %}>Team</a></li>
                     <li><a href="{{ url_for('contact') }}" {% if request.endpoint == 'contact' %}aria-current="page"{% endif %}>Contact Us</a></li>
                     {% if session.get('admin_authenticated') %}
