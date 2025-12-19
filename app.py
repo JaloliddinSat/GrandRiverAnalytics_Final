@@ -1,4 +1,5 @@
 from __future__ import annotations
+from flask import redirect, url_for
 
 import json
 import math
@@ -285,6 +286,10 @@ def register_routes(app: Flask) -> None:
             website_json=website_json,
         )
 
+    @app.route("/blog")
+    def blog_redirect():
+        return redirect(url_for("reports_index"), code=301)
+    
     @app.route("/reports")
     def reports_index() -> str:
         page = max(1, int(request.args.get("page", 1)))
