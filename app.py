@@ -418,7 +418,7 @@ def register_routes(app: Flask) -> None:
             {
                 "name": "Harry Zhu",
                 "title": "Co-founder & Analyst",
-                "bio": "Pursuing a Business Administration (BBA) + Financial Mathematics and Analytics at Wilfrid Laurier University.",
+                "bio": "Pursuing a Business Administration (BBA) + Financial Mathematics & Analytics at Wilfrid Laurier University.",
                 "photo": url_for("static", filename="img/team/defaultpfp.png"),
                 "linkedin": "https://www.linkedin.com/in/harryzhupengzhao/",
             },
