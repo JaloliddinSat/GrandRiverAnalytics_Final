@@ -1171,7 +1171,7 @@ select:focus {
 }
 
 .summary-points li::before {
-    content: "•";
+    content: "â€¢";
     position: absolute;
     left: 0;
     color: var(--accent);
