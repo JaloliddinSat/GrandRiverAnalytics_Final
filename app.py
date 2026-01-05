@@ -6,7 +6,6 @@ import math
 import os
 import re
 import secrets
-import sqlite3
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +17,7 @@ from flask import (
     flash,
     g,
     jsonify,
+    make_response,
     redirect,
     render_template,
     request,
@@ -37,7 +37,6 @@ from utils.db import (
     backup_posts_to_csv,
     close_db,
     execute,
-    get_db,
     init_db,
     query_all,
     query_one,
@@ -49,13 +48,22 @@ load_dotenv()
 
 
 def _resolve_secret_key_path(instance_path: str) -> str:
-    explicit_path = os.getenv("SECRET_KEY_PATH", "").strip()
+    explicit_path = os.getenv("SECRET_KEY_FILE", "").strip()
     if explicit_path:
         return explicit_path
+    db_path = os.getenv("DATABASE_PATH", "").strip()
+    if db_path:
+        base_dir = os.path.dirname(db_path)
+        if base_dir:
+            return os.path.join(base_dir, "secret_key.txt")
     return os.path.join(instance_path, "secret_key.txt")
 
 
-def _ensure_secret_key(instance_path: str) -> str:
+def _load_or_create_secret_key(instance_path: str) -> str:
+    env_key = os.getenv("SECRET_KEY", "").strip()
+    if env_key:
+        return env_key
+
     key_path = _resolve_secret_key_path(instance_path)
     try:
         os.makedirs(os.path.dirname(key_path), exist_ok=True)
@@ -76,12 +84,36 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", template_folder="templates")
     os.makedirs(app.instance_path, exist_ok=True)
 
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or _ensure_secret_key(app.instance_path)
-    app.config["BASE_URL"] = os.getenv("BASE_URL", "https://example.com").rstrip("/")
-    app.config["TINYMCE_API_KEY"] = os.getenv("TINYMCE_API_KEY", "").strip()
-    app.config["ADOBE_TYPEKIT_ID"] = os.getenv("ADOBE_TYPEKIT_ID", "").strip()
+    app.config["SECRET_KEY"] = _load_or_create_secret_key(app.instance_path)
+    app.config["BASE_URL"] = os.getenv("BASE_URL", "http://localhost:5000")
 
-    max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB")
+
+    # Anonymous user id for features like likes (stored in a long-lived cookie)
+    @app.before_request
+    def _ensure_anon_user_id() -> None:
+        existing = request.cookies.get("gra_uid", "").strip()
+        # basic sanity check to avoid storing arbitrary user input as id
+        if existing and re.fullmatch(r"[A-Za-z0-9_\-]{20,200}", existing):
+            g.anon_user_id = existing
+            g._set_anon_cookie = False
+            return
+        g.anon_user_id = secrets.token_urlsafe(24)
+        g._set_anon_cookie = True
+
+    @app.after_request
+    def _maybe_set_anon_cookie(resp: Response) -> Response:
+        if getattr(g, "_set_anon_cookie", False):
+            resp.set_cookie(
+                "gra_uid",
+                getattr(g, "anon_user_id", ""),
+                max_age=60 * 60 * 24 * 365 * 2,
+                samesite="Lax",
+                secure=request.is_secure,
+                httponly=True,
+            )
+        return resp
+    max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB", "64")
+    max_form_bytes = None
     if max_form_mb_raw is not None:
         max_form_mb = max_form_mb_raw.strip()
         if max_form_mb:
@@ -90,7 +122,6 @@ def create_app() -> Flask:
                 max_form_bytes = int(parsed_mb * 1024 * 1024)
             except ValueError:
                 app.logger.warning("MAX_FORM_MEMORY_MB is not a number; ignoring override.")
-                max_form_bytes = 0
         else:
             max_form_bytes = 0
     else:
@@ -103,7 +134,6 @@ def create_app() -> Flask:
     else:
         app.config["MAX_FORM_MEMORY_SIZE"] = None
         app.config["MAX_CONTENT_LENGTH"] = None
-
     admin_hash, used_default_password = ensure_admin_password()
     app.config["ADMIN_PASSWORD_HASH"] = admin_hash
 
@@ -111,26 +141,6 @@ def create_app() -> Flask:
     def before_request() -> None:  # type: ignore[override]
         g.settings = get_settings()
         csrf_protect()
-
-        uid = request.cookies.get("gra_uid")
-        if not uid:
-            uid = secrets.token_urlsafe(16)
-            g._set_gra_uid = uid  # type: ignore[attr-defined]
-        g.anon_user_id = uid  # type: ignore[attr-defined]
-
-    @app.after_request
-    def persist_anon_user_id(response: Response) -> Response:  # type: ignore[override]
-        uid = getattr(g, "_set_gra_uid", None)
-        if uid:
-            response.set_cookie(
-                "gra_uid",
-                uid,
-                max_age=60 * 60 * 24 * 365 * 2,
-                httponly=True,
-                samesite="Lax",
-                secure=request.is_secure,
-            )
-        return response
 
     app.teardown_appcontext(close_db)
 
@@ -155,47 +165,45 @@ def get_settings() -> dict[str, Any]:
     else:
         settings = {
             "site_name": "Grand River Analytics",
-            "site_description": "Independent student-led equity research and investment insights.",
-            "base_url": os.getenv("BASE_URL", "https://example.com").rstrip("/"),
+            "site_description": "Independent equity research across financials, technology, and consumer sectors.",
+            "base_url": os.getenv("BASE_URL", "http://localhost:5000"),
         }
-    settings["base_url"] = (settings.get("base_url") or "").rstrip("/") or os.getenv("BASE_URL", "https://example.com").rstrip("/")
     g._settings = settings  # type: ignore[attr-defined]
     return settings
 
 
-def slugify(value: str) -> str:
-    value = value.strip().lower()
-    value = re.sub(r"[^a-z0-9\s-]", "", value)
-    value = re.sub(r"[\s_-]+", "-", value)
-    return value.strip("-")
-
-
-def normalize_hero_style(value: str | None) -> str:
-    allowed = {"light", "slate", "midnight"}
-    if not value:
-        return "light"
-    normalized = value.strip().lower()
-    return normalized if normalized in allowed else "light"
-
-
-def serialize_post(row: Any) -> dict[str, Any]:
-    if isinstance(row, dict):
-        data = dict(row)
-    else:
-        data = {key: row[key] for key in row.keys()}
-    data["hero_style"] = normalize_hero_style(data.get("hero_style"))
-    return data
-
-
 def resolve_tinymce_assets() -> tuple[str, str]:
-    tinymce_api_key = os.getenv("TINYMCE_API_KEY", "").strip()
-    if tinymce_api_key:
-        return "https://cdn.tiny.cloud/1/{}/tinymce/6/tinymce.min.js".format(tinymce_api_key), tinymce_api_key
-    return "", ""
+    script_override = os.getenv("TINYMCE_SCRIPT_URL", "").strip()
+    raw_key = os.getenv("TINYMCE_API_KEY", "").strip()
+    api_key = ""
+    if raw_key:
+        if raw_key.startswith("{"):
+            try:
+                parsed = json.loads(raw_key)
+            except json.JSONDecodeError:
+                api_key = raw_key
+            else:
+                for candidate in ("apiKey", "api_key", "key", "n"):
+                    value = parsed.get(candidate)
+                    if isinstance(value, str) and value.strip():
+                        api_key = value.strip()
+                        break
+                if not api_key:
+                    api_key = raw_key
+        else:
+            api_key = raw_key
+    if script_override:
+        return script_override, api_key
+    if api_key:
+        return f"https://cdn.tiny.cloud/1/{api_key}/tinymce/6/tinymce.min.js", api_key
+    return "https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js", api_key
 
 
 def resolve_adobe_fonts_url() -> str:
-    kit_id = os.getenv("ADOBE_TYPEKIT_ID", "").strip()
+    explicit_url = os.getenv("ADOBE_FONTS_URL", "").strip()
+    if explicit_url:
+        return explicit_url
+    kit_id = os.getenv("ADOBE_FONTS_KIT_ID", "").strip()
     if kit_id:
         return f"https://use.typekit.net/{kit_id}.css"
     return ""
@@ -233,20 +241,42 @@ def register_filters(app: Flask) -> None:
     def tag_list(value: str | None) -> list[str]:
         if not value:
             return []
-        return [t.strip() for t in value.split(",") if t.strip()]
+        return [tag.strip() for tag in value.split(",") if tag.strip()]
 
 
-def estimate_read_time(content: str) -> int:
-    if not content:
-        return 1
-    words = len(re.findall(r"\w+", content))
-    return max(1, math.ceil(words / 200))
+def slugify(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"[^a-z0-9\s-]", "", value)
+    value = re.sub(r"[\s_-]+", "-", value)
+    return value.strip("-")
+
+
+def normalize_hero_style(value: str | None) -> str:
+    allowed = {"light", "slate", "midnight"}
+    if not value:
+        return "light"
+    normalized = value.strip().lower()
+    return normalized if normalized in allowed else "light"
+
+
+def serialize_post(row: Any) -> dict[str, Any]:
+    if isinstance(row, dict):
+        data = dict(row)
+    else:
+        data = {key: row[key] for key in row.keys()}
+    data["hero_style"] = normalize_hero_style(data.get("hero_style"))
+    return data
+
+
+def estimate_read_time(html: str) -> int:
+    text = re.sub(r"<[^>]+>", " ", html)
+    word_count = len(text.split())
+    return max(1, math.ceil(word_count / 200))
 
 
 def register_routes(app: Flask) -> None:
     @app.route("/")
     def home() -> str:
-        settings = get_settings()
         posts = [
             serialize_post(row)
             for row in query_all(
@@ -258,15 +288,16 @@ def register_routes(app: Flask) -> None:
                 """
             )
         ]
-        canonical = settings["base_url"].rstrip("/")
+        settings = get_settings()
+        canonical = f"{settings['base_url']}"
         meta = seo.build_meta(
-            title=settings["site_name"],
+            title=f"{settings['site_name']} · Independent Equity Research",
             description=settings["site_description"],
             canonical=canonical,
-            image_url=f"{request.host_url.rstrip('/')}/static/img/logo.svg",
+            image_url=posts[0].get("cover_url") if posts else None,
         )
         breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/")])
-        org_json = seo.jsonld_organization(
+        org_json = seo.jsonld_org(
             settings["base_url"],
             settings["site_name"],
             settings["site_description"],
@@ -283,12 +314,14 @@ def register_routes(app: Flask) -> None:
         )
 
     @app.route("/blog")
-    def blog_index() -> Response:
+    def blog_redirect():
         return redirect(url_for("reports_index"), code=301)
-
+    
     @app.route("/reports")
     def reports_index() -> str:
-        settings = get_settings()
+        page = max(1, int(request.args.get("page", 1)))
+        per_page = 10
+        offset = (page - 1) * per_page
         posts = [
             serialize_post(row)
             for row in query_all(
@@ -296,45 +329,37 @@ def register_routes(app: Flask) -> None:
                 SELECT * FROM posts
                 WHERE published = 1
                 ORDER BY COALESCE(publish_date, created_at) DESC
-                """
+                LIMIT ? OFFSET ?
+                """,
+                (per_page, offset),
             )
         ]
-
-        all_tags = set()
-        for post in posts:
-            for tag in (post.get("tags") or "").split(","):
-                cleaned = tag.strip()
-                if cleaned:
-                    all_tags.add(cleaned)
-
+        total_row = query_one("SELECT COUNT(*) as count FROM posts WHERE published = 1")
+        total = total_row["count"] if total_row else 0
+        total_pages = max(1, math.ceil(total / per_page))
+        settings = get_settings()
         canonical = f"{settings['base_url']}/reports"
+        if page > 1:
+            canonical += f"?page={page}"
         meta = seo.build_meta(
             title=f"Reports · {settings['site_name']}",
-            description="Browse research reports and long-form equity writeups.",
+            description="Stock write-ups and sector notes from Grand River Analytics.",
             canonical=canonical,
         )
+        all_tags = set()
+        for post in query_all("SELECT tags FROM posts WHERE published = 1"):
+            for tag in (post["tags"] or "").split(","):
+                tag = tag.strip()
+                if tag:
+                    all_tags.add(tag)
         breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Reports", "/reports")])
         website_json = seo.jsonld_website_search(settings["base_url"])
-
-        page = request.args.get("page", "1").strip()
-        try:
-            page_num = max(1, int(page))
-        except ValueError:
-            page_num = 1
-        per_page = 9
-        total_count = len(posts)
-        total_pages = max(1, math.ceil(total_count / per_page))
-        page_num = min(page_num, total_pages)
-
-        start = (page_num - 1) * per_page
-        end = start + per_page
-        paginated_posts = posts[start:end]
-        prev_url = url_for("reports_index", page=page_num - 1) if page_num > 1 else None
-        next_url = url_for("reports_index", page=page_num + 1) if page_num < total_pages else None
-
+        prev_url = url_for("reports_index", page=page - 1) if page > 1 else None
+        next_url = url_for("reports_index", page=page + 1) if page < total_pages else None
         return render_template(
-            "reports.html",
-            posts=paginated_posts,
+            "blog_index.html",
+            posts=posts,
+            page=page,
             total_pages=total_pages,
             meta=meta,
             breadcrumbs=breadcrumbs,
@@ -352,11 +377,14 @@ def register_routes(app: Flask) -> None:
         post = serialize_post(row)
         if not post.get("published") and not session.get("admin_authenticated"):
             abort(404)
+        # Likes (anonymous, stored per-browser via cookie)
+        like_count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post['id'],))
+        like_count = int(like_count_row['c']) if like_count_row else 0
+        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post['id'], g.anon_user_id)))
         settings = get_settings()
         canonical = f"{settings['base_url']}/post/{post['slug']}"
         meta_title = post.get("meta_title") or post["title"]
         meta_description = post.get("meta_description") or post.get("excerpt") or settings["site_description"]
-
         meta = seo.build_meta(
             title=f"{meta_title} · {settings['site_name']}",
             description=meta_description,
@@ -373,11 +401,6 @@ def register_routes(app: Flask) -> None:
         read_time = estimate_read_time(post.get("content", ""))
         summary_points = [point.strip() for point in (post.get("summary_points") or "").splitlines() if point.strip()]
         hero_style = normalize_hero_style(post.get("hero_style"))
-
-        like_count_row = query_one("SELECT COUNT(*) as count FROM post_likes WHERE post_id = ?", (row["id"],))
-        like_count = int(like_count_row["count"]) if like_count_row else 0
-        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (row["id"], g.anon_user_id)))
-
         more_posts = [
             serialize_post(p)
             for p in query_all(
@@ -387,10 +410,9 @@ def register_routes(app: Flask) -> None:
                 ORDER BY COALESCE(publish_date, created_at) DESC
                 LIMIT 3
                 """,
-                (post["slug"],),
+                (slug,),
             )
         ]
-
         return render_template(
             "post.html",
             post=post,
@@ -407,51 +429,44 @@ def register_routes(app: Flask) -> None:
             preview=False,
         )
 
+
     @app.route("/api/post/<slug>/like", methods=["POST"])
-    def post_like_api(slug: str) -> Response:
-        row = query_one("SELECT id, slug FROM posts WHERE slug = ?", (slug,))
+    def api_post_like(slug: str) -> Response:
+        row = query_one("SELECT id FROM posts WHERE slug = ?", (slug,))
         if not row:
             abort(404)
-
-        action = (request.form.get("action") or "toggle").strip().lower()
         post_id = int(row["id"])
-        user_id = getattr(g, "anon_user_id", None)
-        if not user_id:
-            abort(Response("Missing user id", status=400))
-
-        currently_liked = bool(query_one(
-            "SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?",
-            (post_id, user_id),
-        ))
-        if action == "toggle":
-            action = "unlike" if currently_liked else "like"
-
-        db = get_db()
-        liked = currently_liked
+        payload = request.get_json(silent=True) or {}
+        action = (payload.get("action") or "toggle").lower()
+        user_id = getattr(g, "anon_user_id", "")
+        now = datetime.utcnow().isoformat() + "Z"
 
         if action == "like":
-            try:
-                db.execute(
-                    "INSERT INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)",
-                    (post_id, user_id, f"{datetime.utcnow().isoformat()}Z"),
-                )
-                db.commit()
-            except sqlite3.IntegrityError:
-                # Already liked (unique constraint); treat as idempotent.
-                pass
-            liked = True
+            execute(
+                "INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)",
+                (post_id, user_id, now),
+            )
         elif action == "unlike":
-            db.execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
-            db.commit()
-            liked = False
+            execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
+        elif action == "toggle":
+            already = query_one(
+                "SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?",
+                (post_id, user_id),
+            )
+            if already:
+                execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
+            else:
+                execute(
+                    "INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)",
+                    (post_id, user_id, now),
+                )
         else:
-            abort(Response("Invalid action", status=400))
+            abort(400)
 
-        count_row = query_one("SELECT COUNT(*) as count FROM post_likes WHERE post_id = ?", (post_id,))
-        count = int(count_row["count"]) if count_row else 0
-
+        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id)))
+        count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post_id,))
+        count = int(count_row["c"]) if count_row else 0
         return jsonify({"liked": liked, "count": count})
-
     @app.route("/team")
     def team() -> str:
         settings = get_settings()
@@ -463,94 +478,338 @@ def register_routes(app: Flask) -> None:
         )
         breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Team", "/team")])
         website_json = seo.jsonld_website_search(settings["base_url"])
+        team_members = [
+            {
+                "name": "Jalol Satimov",
+                "title": "Co-founder & Analyst",
+                "bio": "Currently in the Math/Business Administration Program at the University of Waterloo.",
+                "photo": url_for("static", filename="img/team/defaultpfp.png"),
+                "linkedin": "https://www.linkedin.com/in/jalolsatimov/?originalSubdomain=ca",
+            },
+            {
+                "name": "Harry Zhu",
+                "title": "Co-founder & Analyst",
+                "bio": "Pursuing a Business Administration (BBA) + Financial Mathematics & Analytics at Wilfrid Laurier University.",
+                "photo": url_for("static", filename="img/team/defaultpfp.png"),
+                "linkedin": "https://www.linkedin.com/in/harryzhupengzhao/",
+            },
+            {
+                "name": "Babisan Pirapakaran",
+                "title": "Full Stack Developer",
+                "bio": "Currently in the Math Faculty, pursuing a degree in Mathematics at the University of Waterloo.",
+                "photo": url_for("static", filename="img/team/defaultpfp.png"),
+                "linkedin": "www.linkedin.com/in/babisan-pirapakaran-1bb725377",
+            },
+        ]
         return render_template(
             "team.html",
             meta=meta,
             breadcrumbs=breadcrumbs,
             website_json=website_json,
+            team_members=team_members,
         )
-
+    
     @app.route("/contact", methods=["GET", "POST"])
     def contact() -> str:
+        success = False
+    
         settings = get_settings()
         canonical = f"{settings['base_url'].rstrip('/')}/contact"
-
+    
         meta = seo.build_meta(
             title=f"Contact · {settings['site_name']}",
             description="Get in touch with Grand River Analytics.",
             canonical=canonical,
             image_url=None,
         )
-
+    
         breadcrumbs = seo.jsonld_breadcrumbs(
             settings["base_url"],
             [("Home", "/"), ("Contact", "/contact")],
         )
-
+    
         website_json = seo.jsonld_website_search(settings["base_url"])
-
+    
         if request.method == "POST":
             name = request.form.get("name", "").strip()
             email = request.form.get("email", "").strip()
             message = request.form.get("message", "").strip()
-
+    
             if not name or not email or not message:
-                flash("Please fill out all fields.", "error")
+                flash("Please fill out all required fields.", "error")
             else:
-                ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-                user_agent = request.headers.get("User-Agent", "")
-                now = datetime.utcnow().isoformat()
-
+                # store in DB first (never lose the message)
                 execute(
                     """
                     INSERT INTO contact_messages (name, email, message, created_at, ip, user_agent)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
-                    (name, email, message, now, ip, user_agent),
+                    (
+                        name,
+                        email,
+                        message,
+                        datetime.utcnow().isoformat(),
+                        request.headers.get("Fly-Client-IP") or request.remote_addr,
+                        request.headers.get("User-Agent", ""),
+                    ),
                 )
-
+    
+                # email notification (never block success)
                 try:
                     send_contact_email(name, email, message)
                 except Exception:
-                    app.logger.exception("Failed sending contact email.")
-                flash("Thanks — we received your message.", "success")
-                return redirect(url_for("contact"))
-
+                    pass
+    
+                success = True
+    
         return render_template(
             "contact.html",
             meta=meta,
             breadcrumbs=breadcrumbs,
             website_json=website_json,
+            success=success,
         )
+
+    @app.route("/admin-unavailable/")
+    def admin_unavailable() -> str:
+        settings = get_settings()
+        canonical = f"{settings['base_url']}/admin-unavailable/"
+        meta = seo.build_meta(
+            title=f"Admin Offline · {settings['site_name']}",
+            description="This deployment exposes the public site only. Run the Flask service on dynamic hosting to access the admin tools.",
+            canonical=canonical,
+        )
+        breadcrumbs = seo.jsonld_breadcrumbs(
+            settings["base_url"], [("Home", "/"), ("Admin", "/admin-unavailable/")]
+        )
+        return render_template(
+            "admin_unavailable.html",
+            meta=meta,
+            breadcrumbs=breadcrumbs,
+            website_json=seo.jsonld_website_search(settings["base_url"]),
+        )
+
+    @app.route("/rss.xml")
+    def rss_feed() -> Response:
+        settings = get_settings()
+        posts = [
+            serialize_post(row)
+            for row in query_all(
+                "SELECT * FROM posts WHERE published = 1 ORDER BY COALESCE(publish_date, created_at) DESC LIMIT 15"
+            )
+        ]
+        xml_items = []
+        for post in posts:
+            link = f"{settings['base_url']}/post/{post['slug']}"
+            publish_date = post.get("publish_date") or post.get("created_at")
+            xml_items.append(
+                f"""
+                <item>
+                    <title>{post['title']}</title>
+                    <link>{link}</link>
+                    <guid>{link}</guid>
+                    <pubDate>{publish_date}</pubDate>
+                    <description><![CDATA[{post['excerpt']}]]></description>
+                </item>
+                """
+            )
+        rss = f"""<?xml version='1.0' encoding='UTF-8'?>
+        <rss version='2.0'>
+            <channel>
+                <title>{settings['site_name']}</title>
+                <link>{settings['base_url']}</link>
+                <description>{settings['site_description']}</description>
+                {''.join(xml_items)}
+            </channel>
+        </rss>"""
+        return Response(rss, mimetype="application/rss+xml")
+
+    @app.route("/sitemap.xml")
+    def sitemap() -> Response:
+        settings = get_settings()
+        urls = [
+            {"loc": settings["base_url"] + path, "lastmod": datetime.utcnow().date().isoformat()}
+            for path in ["/", "/team", "/contact", "/reports"]
+        ]
+        for post in query_all("SELECT slug, updated_at FROM posts WHERE published = 1"):
+            urls.append(
+                {
+                    "loc": f"{settings['base_url']}/post/{post['slug']}",
+                    "lastmod": (post["updated_at"] or datetime.utcnow().isoformat())[:10],
+                }
+            )
+        xml_urls = [
+            f"<url><loc>{url['loc']}</loc><lastmod>{url['lastmod']}</lastmod></url>"
+            for url in urls
+        ]
+        xml = (
+            "<?xml version='1.0' encoding='UTF-8'?>"
+            "<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>"
+            + "".join(xml_urls)
+            + "</urlset>"
+        )
+        return Response(xml, mimetype="application/xml")
+
+    @app.route("/robots.txt")
+    def robots() -> Response:
+        settings = get_settings()
+        content = f"User-agent: *\nAllow: /\nSitemap: {settings['base_url']}/sitemap.xml\n"
+        return Response(content, mimetype="text/plain")
 
     @app.route("/admin/login", methods=["GET", "POST"])
     def admin_login() -> str:
-        settings = get_settings()
-        canonical = f"{settings['base_url']}/admin/login"
-        meta = seo.build_meta(
-            title=f"Admin Login · {settings['site_name']}",
-            description="Login to manage posts.",
-            canonical=canonical,
-        )
-        breadcrumbs = seo.jsonld_breadcrumbs(settings["base_url"], [("Home", "/"), ("Admin", "/admin"), ("Login", "/admin/login")])
-        website_json = seo.jsonld_website_search(settings["base_url"])
-
+        if session.get("admin_authenticated"):
+            return redirect(url_for("admin_dashboard"))
+        error = None
         if request.method == "POST":
             password = request.form.get("password", "")
-            if verify_password(password, current_app_password_hash(app)):
+            if verify_password(password, app.config["ADMIN_PASSWORD_HASH"]):
                 session["admin_authenticated"] = True
-                flash("Logged in.", "success")
+                flash("Welcome back.", "success")
                 return redirect(url_for("admin_dashboard"))
-            flash("Incorrect password.", "error")
-
-        return render_template(
-            "admin/login.html",
-            meta=meta,
-            breadcrumbs=breadcrumbs,
-            website_json=website_json,
+            error = "Invalid credentials."
+            flash(error, "error")
+        meta = seo.build_meta(
+            title="Admin Login",
+            description="Secure login for Grand River Analytics.",
+            canonical=f"{get_settings()['base_url']}/admin/login",
         )
+        return render_template("admin_login.html", error=error, meta=meta)
 
-    # --- rest of your file unchanged below (admin routes, save handlers, etc.) ---
+    @app.route("/admin/logout")
+    def admin_logout() -> Response:
+        session.pop("admin_authenticated", None)
+        flash("You have been logged out.", "success")
+        return redirect(url_for("admin_login"))
+
+    @app.route("/admin")
+    @login_required
+    def admin_dashboard() -> str:
+        posts = [
+            serialize_post(row)
+            for row in query_all(
+                "SELECT * FROM posts ORDER BY COALESCE(publish_date, created_at) DESC"
+            )
+        ]
+        count_row = query_one(
+            """
+            SELECT
+                SUM(CASE WHEN published = 1 THEN 1 ELSE 0 END) AS published,
+                SUM(CASE WHEN published = 0 THEN 1 ELSE 0 END) AS draft,
+                SUM(CASE WHEN featured = 1 THEN 1 ELSE 0 END) AS featured
+            FROM posts
+            """
+        )
+        stats = {
+            "published": (count_row["published"] if count_row and count_row["published"] else 0),
+            "draft": (count_row["draft"] if count_row and count_row["draft"] else 0),
+            "featured": (count_row["featured"] if count_row and count_row["featured"] else 0),
+        }
+        meta = seo.build_meta(
+            title="Admin Dashboard",
+            description="Manage research posts.",
+            canonical=f"{get_settings()['base_url']}/admin",
+        )
+        return render_template("admin_dashboard.html", posts=posts, meta=meta, stats=stats)
+
+    @app.route("/admin/new", methods=["GET", "POST"])
+    @login_required
+    def admin_new() -> str:
+        if request.method == "POST":
+            return handle_post_save()
+        meta = seo.build_meta(
+            title="New Post",
+            description="Create a research post.",
+            canonical=f"{get_settings()['base_url']}/admin/new",
+        )
+        return render_template("admin_edit.html", meta=meta, post=None, mode="new")
+
+    @app.route("/admin/edit/<int:post_id>", methods=["GET", "POST"])
+    @login_required
+    def admin_edit(post_id: int) -> str:
+        row = query_one("SELECT * FROM posts WHERE id = ?", (post_id,))
+        if not row:
+            abort(404)
+        post = serialize_post(row)
+        if request.method == "POST":
+            return handle_post_save(post)
+        meta = seo.build_meta(
+            title=f"Edit {post['title']}",
+            description="Edit research post.",
+            canonical=f"{get_settings()['base_url']}/admin/edit/{post_id}",
+        )
+        return render_template("admin_edit.html", meta=meta, post=post, mode="edit")
+
+    @app.route("/admin/delete/<int:post_id>", methods=["POST"])
+    @login_required
+    def admin_delete(post_id: int) -> Response:
+        execute("DELETE FROM posts WHERE id = ?", (post_id,))
+        backup_posts_to_csv()
+        flash("Post deleted.", "success")
+        return redirect(url_for("admin_dashboard"))
+
+    @app.route("/admin/duplicate/<int:post_id>", methods=["POST"])
+    @login_required
+    def admin_duplicate(post_id: int) -> Response:
+        row = query_one("SELECT * FROM posts WHERE id = ?", (post_id,))
+        if not row:
+            abort(404)
+        post = serialize_post(row)
+        base_slug = f"{post['slug']}-copy"
+        candidate_slug = base_slug
+        suffix = 2
+        while query_one("SELECT id FROM posts WHERE slug = ?", (candidate_slug,)):
+            candidate_slug = f"{base_slug}-{suffix}"
+            suffix += 1
+        now = datetime.utcnow().isoformat()
+        new_id = execute(
+            """
+            INSERT INTO posts (
+                title,
+                slug,
+                excerpt,
+                content,
+                cover_url,
+                tags,
+                published,
+                created_at,
+                updated_at,
+                publish_date,
+                meta_title,
+                meta_description,
+                hero_kicker,
+                hero_style,
+                highlight_quote,
+                summary_points,
+                cta_label,
+                cta_url,
+                featured
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            (
+                f"{post['title']} (Copy)",
+                candidate_slug,
+                post.get("excerpt"),
+                post.get("content"),
+                post.get("cover_url"),
+                post.get("tags"),
+                now,
+                now,
+                post.get("publish_date") or now,
+                post.get("meta_title"),
+                post.get("meta_description"),
+                post.get("hero_kicker"),
+                post.get("hero_style"),
+                post.get("highlight_quote"),
+                post.get("summary_points"),
+                post.get("cta_label"),
+                post.get("cta_url"),
+            ),
+        )
+        backup_posts_to_csv()
+        flash("Draft copied.", "success")
+        return redirect(url_for("admin_edit", post_id=new_id))
 
     @app.route("/admin/preview/<int:post_id>")
     @login_required
@@ -583,11 +842,10 @@ def register_routes(app: Flask) -> None:
         read_time = estimate_read_time(post.get("content", ""))
         summary_points = [point.strip() for point in (post.get("summary_points") or "").splitlines() if point.strip()]
         hero_style = normalize_hero_style(post.get("hero_style"))
-
-        like_count_row = query_one("SELECT COUNT(*) as count FROM post_likes WHERE post_id = ?", (row["id"],))
-        like_count = int(like_count_row["count"]) if like_count_row else 0
-        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (row["id"], g.anon_user_id)))
-
+        # Likes (anonymous, stored per-browser via cookie)
+        like_count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post['id'],))
+        like_count = int(like_count_row['c']) if like_count_row else 0
+        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post['id'], g.anon_user_id)))
         more_posts = [
             serialize_post(p)
             for p in query_all(
@@ -616,12 +874,148 @@ def register_routes(app: Flask) -> None:
             preview=True,
         )
 
+    def handle_post_save(existing: dict[str, Any] | None = None):
+        title = request.form.get("title", "").strip()
+        slug_input = request.form.get("slug", "").strip()
+        excerpt = request.form.get("excerpt", "").strip()
+        content = request.form.get("content", "").strip()
+        cover_url = request.form.get("cover_url", "").strip()
+        tags = ", ".join([tag.strip() for tag in request.form.get("tags", "").split(",") if tag.strip()])
+        publish_date_input = request.form.get("publish_date", "").strip()
+        if publish_date_input:
+            publish_date = publish_date_input
+        elif existing and existing.get("publish_date"):
+            publish_date = existing["publish_date"]
+        else:
+            publish_date = datetime.utcnow().isoformat()
+        action = request.form.get("action", "draft")
+        publish_state = action == "publish"
+        hero_kicker = request.form.get("hero_kicker", "").strip()
+        hero_style = normalize_hero_style(request.form.get("hero_style"))
+        highlight_quote = request.form.get("highlight_quote", "").strip()
+        summary_points = request.form.get("summary_points", "").strip()
+        cta_label = request.form.get("cta_label", "").strip()
+        cta_url = request.form.get("cta_url", "").strip()
+        meta_title = request.form.get("meta_title", "").strip()
+        meta_description = request.form.get("meta_description", "").strip()
+        featured = 1 if request.form.get("featured") else 0
 
-def current_app_password_hash(app: Flask) -> str:
-    # Helper for admin_login; matches your existing approach
-    return app.config.get("ADMIN_PASSWORD_HASH", "")
+        if not title or not excerpt or not content:
+            flash("Title, excerpt, and content are required.", "error")
+            return redirect(request.url)
+
+        slug = slugify(slug_input or title)
+        if not slug:
+            flash("Unable to generate a slug. Please adjust the title.", "error")
+            return redirect(request.url)
+        other = query_one(
+            "SELECT id FROM posts WHERE slug = ? AND id != ?",
+            (slug, existing["id"] if existing else 0),
+        )
+        if other:
+            flash("Slug already in use.", "error")
+            return redirect(request.url)
+
+        now = datetime.utcnow().isoformat()
+        if existing:
+            execute(
+                """
+                UPDATE posts SET title = ?, slug = ?, excerpt = ?, content = ?, cover_url = ?, tags = ?,
+                    published = ?, updated_at = ?, publish_date = ?, meta_title = ?, meta_description = ?,
+                    hero_kicker = ?, hero_style = ?, highlight_quote = ?, summary_points = ?, cta_label = ?,
+                    cta_url = ?, featured = ? WHERE id = ?
+                """,
+                (
+                    title,
+                    slug,
+                    excerpt,
+                    content,
+                    cover_url or None,
+                    tags or None,
+                    1 if publish_state else 0,
+                    now,
+                    publish_date,
+                    meta_title or None,
+                    meta_description or None,
+                    hero_kicker or None,
+                    hero_style or None,
+                    highlight_quote or None,
+                    summary_points or None,
+                    cta_label or None,
+                    cta_url or None,
+                    featured,
+                    existing["id"],
+                ),
+            )
+            backup_posts_to_csv()
+            flash("Post updated.", "success")
+            if action == "preview":
+                return redirect(url_for("admin_preview", post_id=existing["id"]))
+            return redirect(url_for("admin_edit", post_id=existing["id"]))
+        new_id = execute(
+            """
+            INSERT INTO posts (
+                title,
+                slug,
+                excerpt,
+                content,
+                cover_url,
+                tags,
+                published,
+                created_at,
+                updated_at,
+                publish_date,
+                meta_title,
+                meta_description,
+                hero_kicker,
+                hero_style,
+                highlight_quote,
+                summary_points,
+                cta_label,
+                cta_url,
+                featured
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                title,
+                slug,
+                excerpt,
+                content,
+                cover_url or None,
+                tags or None,
+                1 if publish_state else 0,
+                now,
+                now,
+                publish_date,
+                meta_title or None,
+                meta_description or None,
+                hero_kicker or None,
+                hero_style or None,
+                highlight_quote or None,
+                summary_points or None,
+                cta_label or None,
+                cta_url or None,
+                featured,
+            ),
+        )
+        backup_posts_to_csv()
+        flash("Post created.", "success")
+        if action == "preview":
+            return redirect(url_for("admin_preview", post_id=new_id))
+        return redirect(url_for("admin_edit", post_id=new_id))
+
+    @app.route("/health")
+    def health() -> Response:
+        return jsonify({"status": "ok"})
+
+
+app = create_app()
+
+
+def main() -> None:
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False)
 
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
+    main()
