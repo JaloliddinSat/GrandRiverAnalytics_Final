@@ -1171,7 +1171,7 @@ select:focus {
 }
 
 .summary-points li::before {
-    content: "â€¢";
+    content: "Ã¢â‚¬Â¢";
     position: absolute;
     left: 0;
     color: var(--accent);
@@ -1729,51 +1729,36 @@ body.admin-shell {
 
 /* Likes */
 .like-widget {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    margin: 18px 0 8px 0;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(6px);
+    gap: 10px;
+    margin: 16px 0 8px 0;
 }
 
 .like-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.14);
-    background: #fff;
-    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
     cursor: pointer;
-    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-}
-
-.like-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    line-height: 1;
 }
 
 .like-icon {
-    font-size: 16px;
-    line-height: 1;
-    transform: translateY(-0.5px);
+    font-size: 20px;
+    display: inline-block;
+    transform: translateY(1px);
 }
 
-.like-widget.is-liked .like-button {
-    border-color: rgba(220, 38, 38, 0.35);
-    background: rgba(220, 38, 38, 0.06);
-}
-
-.like-widget.is-liked .like-icon {
-    color: rgb(220, 38, 38);
+.like-widget.is-loading .like-button {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .like-count {
     font-variant-numeric: tabular-nums;
-    color: rgba(15, 23, 42, 0.70);
+    color: rgba(15, 23, 42, 0.75);
+    font-weight: 600;
 }
