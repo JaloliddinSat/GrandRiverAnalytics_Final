@@ -45,15 +45,14 @@
             {% if post.highlight_quote %}
             <blockquote class="article-quote">{{ post.highlight_quote }}</blockquote>
             {% endif %}
-            <div class="like-widget" data-like-widget data-post-slug="{{ post.slug }}" data-liked="{{ 1 if liked else 0 }}">
+            <div class="like-widget" data-like-widget data-post-slug="{{ post.slug }}" data-liked="{{ 1 if liked else 0 }}" data-csrf-token="{{ csrf_token() }}">
                 <button class="like-button" type="button" aria-label="Like this report" aria-pressed="{{ 'true' if liked else 'false' }}">
-                    <span class="like-icon" aria-hidden="true">♥</span>
-                    <span class="like-label">{{ 'Liked' if liked else 'Like' }}</span>
+                    <span class="like-icon" aria-hidden="true">{{ '♥' if liked else '♡' }}</span>
                 </button>
                 <span class="like-count" aria-label="Total likes"><span data-like-count>{{ like_count }}</span></span>
             </div>
-            
-            <div class="article-body" data-article-content>
+
+            <div class="article-body" data-article-content> data-article-content>
                 {{ post.content|safe }}
             </div>
             {% if post.cta_label and post.cta_url %}
