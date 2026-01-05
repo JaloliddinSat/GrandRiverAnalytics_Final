@@ -6,7 +6,6 @@
         initSlugSync();
         initImageFallbacks();
         ensureEmptyState();
-        initLikeWidget();
     });
 
     function initSearchFilter() {
@@ -166,86 +165,4 @@
             image.remove();
         }
     }
-
-    function initLikeWidget() {
-        const widget = document.querySelector('[data-like-widget]');
-        if (!widget) return;
-
-        const slug = widget.getAttribute('data-post-slug');
-        const csrfToken = widget.getAttribute('data-csrf-token') || '';
-        const btn = widget.querySelector('.like-button');
-        const countEl = widget.querySelector('[data-like-count]');
-        const iconEl = widget.querySelector('.like-icon');
-
-        if (!slug || !btn || !countEl || !iconEl || !csrfToken) return;
-
-        let liked = widget.getAttribute('data-liked') === '1';
-
-        function syncUI() {
-            widget.classList.toggle('is-liked', liked);
-            btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
-            iconEl.textContent = liked ? '♥' : '♡';
-        }
-
-        syncUI();
-
-        btn.addEventListener('click', async function () {
-            if (widget.classList.contains('is-loading')) return;
-            widget.classList.add('is-loading');
-
-            try {
-                const action = liked ? 'unlike' : 'like';
-
-                const res = await fetch(`/api/post/${encodeURIComponent(slug)}/like`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken,
-                    },
-                    body: JSON.stringify({ action, csrf_token: csrfToken }),
-                    credentials: 'same-origin',
-                });
-
-                if (!res.ok) throw new Error('Request failed');
-                const data = await res.json();
-
-                liked = !!data.liked;
-                countEl.textContent = String(data.count ?? 0);
-                widget.setAttribute('data-liked', liked ? '1' : '0');
-                syncUI();
-            } catch (e) {
-                // no-op: keep UI as-is
-            } finally {
-                widget.classList.remove('is-loading');
-            }
-        });
-    }
-
-
-        syncUI();
-
-        btn.addEventListener('click', async function () {
-            btn.disabled = true;
-            try {
-                const action = liked ? 'unlike' : 'like';
-                const res = await fetch(`/api/post/${encodeURIComponent(slug)}/like`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action }),
-                    credentials: 'same-origin',
-                });
-
-                if (!res.ok) throw new Error('Request failed');
-                const data = await res.json();
-                liked = !!data.liked;
-                countEl.textContent = String(data.count ?? 0);
-                syncUI();
-            } catch (e) {
-                // no-op: keep UI as-is
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    }
-
 })();
