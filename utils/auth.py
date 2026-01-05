@@ -16,16 +16,19 @@ def hash_password(password: str) -> str:
     return generate_password_hash(password)
 
 
-def verify_password(password: str, stored_hash: str) -> bool:
-    if not stored_hash:
-        return False
-    return check_password_hash(stored_hash, password)
+def verify_password(password: str, hashed: str) -> bool:
+    return check_password_hash(hashed, password)
 
 
 def ensure_admin_password() -> Tuple[str, bool]:
-    raw_password = os.getenv("ADMIN_PASSWORD", "").strip()
-    if raw_password:
-        return hash_password(raw_password), False
+    password_hash = os.getenv("ADMIN_PASSWORD_HASH")
+    if password_hash:
+        return password_hash, False
+
+    password = os.getenv("ADMIN_PASSWORD")
+    if password:
+        return hash_password(password), False
+
     default_password = "researchadmin"
     return hash_password(default_password), True
 
@@ -40,23 +43,9 @@ def generate_csrf_token() -> str:
 
 
 def validate_csrf_token() -> bool:
-    # Accept CSRF token from:
-    # 1) form field (standard HTML forms)
-    # 2) header X-CSRF-Token (fetch/AJAX)
-    # 3) JSON body field csrf_token (fetch/AJAX)
     sent_token = request.form.get("csrf_token")
-
-    if not sent_token:
-        sent_token = request.headers.get("X-CSRF-Token")
-
-    if not sent_token:
-        payload = request.get_json(silent=True) or {}
-        if isinstance(payload, dict):
-            sent_token = payload.get("csrf_token")
-
     session_token = session.get(CSRF_SESSION_KEY)
     issued_at = session.get(CSRF_TIMESTAMP_KEY, 0)
-
     if not sent_token or not session_token:
         return False
     if sent_token != session_token:
