@@ -54,7 +54,6 @@ def get_db() -> sqlite3.Connection:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         g.db = sqlite3.connect(db_path)
         g.db.row_factory = sqlite3.Row
-        g.db.execute('PRAGMA foreign_keys = ON')
     return g.db
 
 
@@ -117,19 +116,6 @@ def init_db() -> None:
             featured INTEGER NOT NULL DEFAULT 0
         )
         """)
-        # post likes (anonymous via cookie user_id)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS post_likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            user_id TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            UNIQUE(post_id, user_id),
-            FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-        )
-        """)
-        cursor.execute("""CREATE INDEX IF NOT EXISTS idx_post_likes_post_id ON post_likes(post_id)""")
-
 
         # contact messages  ✅ separate execute
         cursor.execute("""
