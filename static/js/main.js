@@ -6,6 +6,7 @@
         initSlugSync();
         initImageFallbacks();
         ensureEmptyState();
+        initLikeWidgets();
     });
 
     function initSearchFilter() {
@@ -14,21 +15,24 @@
         const list = document.querySelector('[data-post-list]');
         const posts = Array.from(document.querySelectorAll('[data-post]'));
         searchInput.addEventListener('input', function () {
-            const term = this.value.toLowerCase();
+            const query = (this.value || '').toLowerCase();
+            let visibleCount = 0;
             posts.forEach((post) => {
-                const haystack = (post.getAttribute('data-title') || '').toLowerCase();
-                post.style.display = haystack.includes(term) ? '' : 'none';
+                const title = (post.getAttribute('data-post-title') || '').toLowerCase();
+                const excerpt = (post.getAttribute('data-post-excerpt') || '').toLowerCase();
+                const matches = title.includes(query) || excerpt.includes(query);
+                post.style.display = matches ? '' : 'none';
+                if (matches) visibleCount += 1;
             });
-            updateEmptyState(list, posts);
+            if (list) list.setAttribute('data-visible-count', String(visibleCount));
         });
     }
 
     function initTagFilter() {
-        const tagButtons = document.querySelectorAll('[data-tag-filter]');
+        const tagButtons = Array.from(document.querySelectorAll('[data-tag-filter]'));
         if (!tagButtons.length) return;
-        const list = document.querySelector('[data-post-list]');
         const posts = Array.from(document.querySelectorAll('[data-post]'));
-        const defaultButton = document.querySelector('[data-tag-filter=""]');
+        const defaultButton = tagButtons.find((button) => button.getAttribute('data-tag-filter') === 'all');
         tagButtons.forEach((button) => {
             button.addEventListener('click', function () {
                 const tag = (this.getAttribute('data-tag-filter') || '').toLowerCase();
@@ -43,126 +47,154 @@
                 } else {
                     this.classList.add('active');
                 }
+
                 posts.forEach((post) => {
-                    const tags = (post.getAttribute('data-tags') || '').toLowerCase();
-                    if (!activeTag || tags.includes(activeTag)) {
+                    if (!activeTag || activeTag === 'all') {
                         post.style.display = '';
-                    } else {
-                        post.style.display = 'none';
+                        return;
                     }
+                    const tags = (post.getAttribute('data-post-tags') || '').toLowerCase();
+                    const matches = tags.split(',').map((t) => t.trim()).includes(activeTag);
+                    post.style.display = matches ? '' : 'none';
                 });
-                updateEmptyState(list, posts);
             });
         });
     }
 
-    function updateEmptyState(list, posts) {
-        if (!list) return;
-        const emptyState = list.querySelector('[data-empty-state]');
-        if (!emptyState) return;
-        const hasVisible = posts.some((post) => post.style.display !== 'none');
-        emptyState.hidden = hasVisible;
-    }
-
-    function ensureEmptyState() {
-        const list = document.querySelector('[data-post-list]');
-        if (!list) return;
-        const posts = Array.from(list.querySelectorAll('[data-post]'));
-        updateEmptyState(list, posts);
-    }
-
     function buildTableOfContents() {
-        const article = document.querySelector('[data-article-content]');
-        const toc = document.getElementById('toc');
-        if (!article || !toc) return;
-        const headings = article.querySelectorAll('h2, h3');
-        if (!headings.length) {
-            toc.innerHTML = '<p class="muted">No sections</p>';
-            return;
-        }
-        const list = document.createElement('ol');
-        headings.forEach((heading, index) => {
-            if (!heading.id) {
-                heading.id = `section-${index + 1}`;
-            }
+        const container = document.querySelector('[data-article-content]');
+        const toc = document.querySelector('[data-toc]');
+        if (!container || !toc) return;
+
+        const headings = Array.from(container.querySelectorAll('h2, h3'));
+        if (!headings.length) return;
+
+        const fragment = document.createDocumentFragment();
+        headings.forEach((heading) => {
+            const level = heading.tagName.toLowerCase();
+            const title = heading.textContent || '';
+            const id = heading.id || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+            heading.id = id;
             const li = document.createElement('li');
-            li.className = heading.tagName.toLowerCase();
-            const link = document.createElement('a');
-            link.href = `#${heading.id}`;
-            link.textContent = heading.textContent || `Section ${index + 1}`;
-            li.appendChild(link);
-            list.appendChild(li);
+            li.className = `toc-${level}`;
+            const a = document.createElement('a');
+            a.href = `#${id}`;
+            a.textContent = title;
+            li.appendChild(a);
+            fragment.appendChild(li);
         });
-        toc.innerHTML = '';
-        toc.appendChild(list);
+
+        toc.appendChild(fragment);
+        toc.classList.add('is-visible');
     }
 
     function initSlugSync() {
-        const titleInput = document.querySelector('[data-title-input]');
-        const slugInput = document.querySelector('[data-slug-input]');
-        if (!titleInput || !slugInput) return;
-        let userModified = slugInput.value.trim().length > 0;
-        slugInput.addEventListener('input', function () {
-            userModified = this.value.trim().length > 0;
-        });
-        titleInput.addEventListener('input', function () {
-            if (userModified) return;
-            const slug = this.value
+        const title = document.querySelector('[data-slug-title]');
+        const slug = document.querySelector('[data-slug-input]');
+        if (!title || !slug) return;
+
+        const slugify = (value) =>
+            (value || '')
                 .toLowerCase()
                 .trim()
                 .replace(/[^a-z0-9\s-]/g, '')
                 .replace(/[\s_-]+/g, '-')
                 .replace(/^-+|-+$/g, '');
-            slugInput.value = slug;
+
+        title.addEventListener('input', () => {
+            if (slug.dataset.locked === 'true') return;
+            slug.value = slugify(title.value);
+        });
+
+        slug.addEventListener('input', () => {
+            slug.dataset.locked = 'true';
         });
     }
 
     function initImageFallbacks() {
-        const images = document.querySelectorAll('[data-fallback-image]');
-        images.forEach((img) => {
-            const container = img.closest('[data-fallback-container]');
-            if (!container) return;
-
-            if (img.complete) {
-                if (img.naturalWidth === 0) {
-                    handleError(img, container);
-                } else {
-                    markLoaded(container);
-                }
-            }
-
-            img.addEventListener('load', () => {
-                markLoaded(container);
-            });
-
-            img.addEventListener('error', () => {
-                handleError(img, container);
+        const images = Array.from(document.querySelectorAll('img[data-img-fallback]'));
+        images.forEach((image) => {
+            image.addEventListener('error', () => {
+                const fallback = image.getAttribute('data-img-fallback');
+                if (fallback) image.src = fallback;
             });
         });
+    }
 
-        function markLoaded(container) {
-            container.classList.add('has-image');
-            container.classList.remove('image-missing');
-            container.removeAttribute('role');
-            container.removeAttribute('aria-label');
-            container.removeAttribute('aria-hidden');
-        }
+    function ensureEmptyState() {
+        const list = document.querySelector('[data-post-list]');
+        if (!list) return;
+        const posts = Array.from(document.querySelectorAll('[data-post]'));
+        const empty = document.querySelector('[data-empty-state]');
+        if (!empty) return;
 
-        function handleError(image, container) {
-            const fallback = image.getAttribute('data-default-cover');
-            if (fallback && image.src !== fallback) {
-                image.src = fallback;
-                return;
-            }
-            container.classList.add('image-missing');
-            container.classList.remove('has-image');
-            const label = container.getAttribute('data-placeholder-label');
-            if (label) {
-                container.setAttribute('role', 'img');
-                container.setAttribute('aria-label', label);
-            }
-            container.removeAttribute('aria-hidden');
-            image.remove();
-        }
+        const update = () => {
+            const anyVisible = posts.some((p) => p.style.display !== 'none');
+            empty.style.display = anyVisible ? 'none' : '';
+        };
+
+        const observer = new MutationObserver(update);
+        posts.forEach((post) => observer.observe(post, { attributes: true, attributeFilter: ['style'] }));
+        update();
+    }
+
+    function initLikeWidgets() {
+        const widgets = Array.from(document.querySelectorAll('[data-like-widget]'));
+        if (!widgets.length) return;
+
+        widgets.forEach((widget) => {
+            const url = widget.getAttribute('data-like-url');
+            const csrfToken = widget.getAttribute('data-csrf-token') || '';
+            const button = widget.querySelector('[data-like-button]');
+            const countEl = widget.querySelector('[data-like-count]');
+            const labelEl = widget.querySelector('[data-like-label]');
+            if (!url || !csrfToken || !button || !countEl || !labelEl) return;
+
+            let liked = widget.getAttribute('data-liked') === '1';
+
+            const syncUI = (nextLiked, nextCount) => {
+                liked = !!nextLiked;
+                widget.setAttribute('data-liked', liked ? '1' : '0');
+                button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+                widget.classList.toggle('is-liked', liked);
+                labelEl.textContent = liked ? 'Liked' : 'Like';
+                if (typeof nextCount === 'number' && Number.isFinite(nextCount)) {
+                    countEl.textContent = String(nextCount);
+                }
+            };
+
+            // Ensure initial class matches initial state
+            widget.classList.toggle('is-liked', liked);
+
+            button.addEventListener('click', async () => {
+                if (button.disabled) return;
+                button.disabled = true;
+
+                const action = liked ? 'unlike' : 'like';
+                const body = new URLSearchParams();
+                body.set('csrf_token', csrfToken);
+                body.set('action', action);
+
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                        body,
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const data = await res.json();
+                    syncUI(!!data.liked, Number(data.count));
+                } catch (err) {
+                    // If the request fails, do not change UI state.
+                    console.error(err);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
     }
 })();
