@@ -196,6 +196,32 @@ ul, ol {
     font-weight: 400;
 }
 
+/* Image fallback: hide the letter when the image is present */
+[data-fallback-container] {
+  position: relative;
+}
+
+[data-fallback-container] .media-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;              /* hidden by default */
+  pointer-events: none;
+}
+
+/* When JS marks image loaded */
+[data-fallback-container].has-image .media-fallback {
+  opacity: 0;
+}
+
+/* Only show the letter when the image is truly missing */
+[data-fallback-container].image-missing .media-fallback {
+  opacity: 1;
+}
+
+
 .button.primary {
     background: #2f5d8c;
     border-color: #2f5d8c;
