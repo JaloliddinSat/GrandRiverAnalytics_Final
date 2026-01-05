@@ -17,7 +17,6 @@ from flask import (
     flash,
     g,
     jsonify,
-    make_response,
     redirect,
     render_template,
     request,
@@ -86,32 +85,6 @@ def create_app() -> Flask:
 
     app.config["SECRET_KEY"] = _load_or_create_secret_key(app.instance_path)
     app.config["BASE_URL"] = os.getenv("BASE_URL", "http://localhost:5000")
-
-
-    # Anonymous user id for features like likes (stored in a long-lived cookie)
-    @app.before_request
-    def _ensure_anon_user_id() -> None:
-        existing = request.cookies.get("gra_uid", "").strip()
-        # basic sanity check to avoid storing arbitrary user input as id
-        if existing and re.fullmatch(r"[A-Za-z0-9_\-]{20,200}", existing):
-            g.anon_user_id = existing
-            g._set_anon_cookie = False
-            return
-        g.anon_user_id = secrets.token_urlsafe(24)
-        g._set_anon_cookie = True
-
-    @app.after_request
-    def _maybe_set_anon_cookie(resp: Response) -> Response:
-        if getattr(g, "_set_anon_cookie", False):
-            resp.set_cookie(
-                "gra_uid",
-                getattr(g, "anon_user_id", ""),
-                max_age=60 * 60 * 24 * 365 * 2,
-                samesite="Lax",
-                secure=request.is_secure,
-                httponly=True,
-            )
-        return resp
     max_form_mb_raw = os.getenv("MAX_FORM_MEMORY_MB", "64")
     max_form_bytes = None
     if max_form_mb_raw is not None:
@@ -377,10 +350,6 @@ def register_routes(app: Flask) -> None:
         post = serialize_post(row)
         if not post.get("published") and not session.get("admin_authenticated"):
             abort(404)
-        # Likes (anonymous, stored per-browser via cookie)
-        like_count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post['id'],))
-        like_count = int(like_count_row['c']) if like_count_row else 0
-        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post['id'], g.anon_user_id)))
         settings = get_settings()
         canonical = f"{settings['base_url']}/post/{post['slug']}"
         meta_title = post.get("meta_title") or post["title"]
@@ -424,49 +393,9 @@ def register_routes(app: Flask) -> None:
             more_posts=more_posts,
             summary_points=summary_points,
             hero_style=hero_style,
-            like_count=like_count,
-            liked=liked,
             preview=False,
         )
 
-
-    @app.route("/api/post/<slug>/like", methods=["POST"])
-    def api_post_like(slug: str) -> Response:
-        row = query_one("SELECT id FROM posts WHERE slug = ?", (slug,))
-        if not row:
-            abort(404)
-        post_id = int(row["id"])
-        payload = request.get_json(silent=True) or {}
-        action = (payload.get("action") or "toggle").lower()
-        user_id = getattr(g, "anon_user_id", "")
-        now = datetime.utcnow().isoformat() + "Z"
-
-        if action == "like":
-            execute(
-                "INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)",
-                (post_id, user_id, now),
-            )
-        elif action == "unlike":
-            execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
-        elif action == "toggle":
-            already = query_one(
-                "SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?",
-                (post_id, user_id),
-            )
-            if already:
-                execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
-            else:
-                execute(
-                    "INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)",
-                    (post_id, user_id, now),
-                )
-        else:
-            abort(400)
-
-        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id)))
-        count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post_id,))
-        count = int(count_row["c"]) if count_row else 0
-        return jsonify({"liked": liked, "count": count})
     @app.route("/team")
     def team() -> str:
         settings = get_settings()
@@ -842,10 +771,6 @@ def register_routes(app: Flask) -> None:
         read_time = estimate_read_time(post.get("content", ""))
         summary_points = [point.strip() for point in (post.get("summary_points") or "").splitlines() if point.strip()]
         hero_style = normalize_hero_style(post.get("hero_style"))
-        # Likes (anonymous, stored per-browser via cookie)
-        like_count_row = query_one("SELECT COUNT(*) AS c FROM post_likes WHERE post_id = ?", (post['id'],))
-        like_count = int(like_count_row['c']) if like_count_row else 0
-        liked = bool(query_one("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?", (post['id'], g.anon_user_id)))
         more_posts = [
             serialize_post(p)
             for p in query_all(
@@ -869,8 +794,6 @@ def register_routes(app: Flask) -> None:
             more_posts=more_posts,
             summary_points=summary_points,
             hero_style=hero_style,
-            like_count=like_count,
-            liked=liked,
             preview=True,
         )
 
