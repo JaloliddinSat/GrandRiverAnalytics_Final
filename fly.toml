@@ -33,11 +33,21 @@ primary_region = "ord"
     handlers = ["tls", "http"]
     port = 443
 
+  # TCP check: confirms the port is open
   [[services.tcp_checks]]
     grace_period = "30s"
     interval = "60s"
     restart_limit = 0
     timeout = "5s"
+
+  # HTTP check: confirms your web app is actually responding
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "get"
+    path = "/"
+    protocol = "http"
 
 [mounts]
   source = "data"
