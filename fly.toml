@@ -17,10 +17,8 @@ primary_region = "ord"
   processes = ["app"]
   protocol = "tcp"
 
-  # Auto-stop / auto-start (best for low-traffic apps)
-  auto_start_machines = true
-  auto_stop_machines = "suspend"
-  min_machines_running = 0
+  # Keep at least one machine running (disables cold-start behavior)
+  min_machines_running = 1
 
   [services.concurrency]
     type = "connections"
