@@ -37,9 +37,9 @@ primary_region = "ord"
 
   [[services.tcp_checks]]
     grace_period = "30s"
-    interval = "15s"
+    interval = "60s"
     restart_limit = 0
-    timeout = "2s"
+    timeout = "5s"
 
 [mounts]
   source = "data"
