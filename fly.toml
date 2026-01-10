@@ -9,16 +9,15 @@ primary_region = "ord"
   DATABASE_PATH = "/data/grandriver.db"
   REPORTS_CSV_PATH = "/data/reports_backup.csv"
 
-# Standard Nomad-style services configuration compatible with Fly Launch,
-# the dashboard "Deploy" button, and `fly deploy` without needing any
-# temporary manifest generation.
 [[services]]
   internal_port = 8080
   processes = ["app"]
   protocol = "tcp"
 
-  # Keep at least one machine running (disables cold-start behavior)
-  min_machines_running = 1
+  # Autosuspend ON (cost-saving)
+  auto_start_machines = true
+  auto_stop_machines = "suspend"
+  min_machines_running = 0
 
   [services.concurrency]
     type = "connections"
@@ -33,18 +32,17 @@ primary_region = "ord"
     handlers = ["tls", "http"]
     port = 443
 
-  # TCP check: confirms the port is open
+  # TCP check: port is open
   [[services.tcp_checks]]
-    grace_period = "30s"
     interval = "60s"
-    restart_limit = 0
     timeout = "5s"
+    grace_period = "45s"
 
-  # HTTP check: confirms your web app is actually responding
+  # HTTP check: app is actually ready
   [[services.http_checks]]
     interval = "15s"
     timeout = "5s"
-    grace_period = "30s"
+    grace_period = "45s"
     method = "get"
     path = "/"
     protocol = "http"
