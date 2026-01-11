@@ -34,11 +34,17 @@ def ensure_admin_password() -> Tuple[str, bool]:
 
 
 def generate_csrf_token() -> str:
+    now = int(time.time())
     token = session.get(CSRF_SESSION_KEY)
-    if not token:
+    issued_at = int(session.get(CSRF_TIMESTAMP_KEY, 0))
+
+    # If missing OR expired, generate a new token
+    if (not token) or (now - issued_at > CSRF_TTL_SECONDS):
         token = secrets.token_urlsafe(32)
         session[CSRF_SESSION_KEY] = token
-        session[CSRF_TIMESTAMP_KEY] = int(time.time())
+
+    # Refresh timestamp (sliding expiry)
+    session[CSRF_TIMESTAMP_KEY] = now
     return token
 
 
